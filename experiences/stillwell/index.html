@@ -212,7 +212,7 @@
           if(version===soundVersion && audioEnabled && !document.hidden)tuneSound();
         }
         function stopOneShots(level=-1){
-          for(const shot of oneShots)if(shot.phase>level){shot.osc.stop();shot.osc.disconnect();shot.gain.disconnect();oneShots.delete(shot);}
+          for(const shot of oneShots)if(shot.phase>level){shot.osc.stop();shot.osc.disconnect();shot.gain.disconnect();if(shot.filter)shot.filter.disconnect();oneShots.delete(shot);}
         }
         function cancelWhisper(){
           clearTimeout(whisperTimer);whisperVersion++;whisperPhase=null;hiddenWhisper=false;
@@ -263,18 +263,34 @@
           pulse(70,.13,t,.22);pulse(56,.09,t+.21,.24);
         }
         function knock(level){if(!audio||!audioEnabled)return;const t=audio.ctx.currentTime;for(let i=0;i<3;i++)pulse(150-level*10,.1,t+i*.42,.12,'triangle');}
+        function whisperBurst(level,version){
+          if(!audio||!audioEnabled||document.hidden||phase!==level||whisperVersion!==version)return;
+          const ctx=audio.ctx;const t=ctx.currentTime;const osc=ctx.createBufferSource();const filter=ctx.createBiquadFilter();const gain=ctx.createGain();
+          const buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*1.4),ctx.sampleRate);const data=buffer.getChannelData(0);
+          for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+          osc.buffer=buffer;filter.type='bandpass';filter.frequency.value=1500;filter.Q.value=.8;
+          gain.gain.setValueAtTime(0,t);
+          for(let i=0;i<3;i++){const start=t+i*.42;gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime([.055,.075,.045][i],start+.09);gain.gain.linearRampToValueAtTime(0,start+.34);}
+          osc.connect(filter);filter.connect(gain);gain.connect(audio.master);
+          const shot={osc,filter,gain,phase:level};oneShots.add(shot);
+          osc.onended=()=>{osc.disconnect();filter.disconnect();gain.disconnect();oneShots.delete(shot);if(whisperVersion===version)whisperPhase=null;};
+          osc.start(t);osc.stop(t+1.4);
+        }
         function scheduleWhisper(level){
           cancelWhisper();
-          if(!('speechSynthesis' in window)||!audioEnabled||level<3)return;
+          if(!audioEnabled||level<3)return;
           whisperPhase=level;
           const version=whisperVersion;
           if(document.hidden){hiddenWhisper=true;return;}
           whisperTimer=setTimeout(()=>{
             if(!audioEnabled||document.hidden||phase!==level)return;
+            if(!('speechSynthesis' in window)||!window.speechSynthesis.getVoices().length){whisperBurst(level,version);return;}
             const phrases={3:'We have been waiting.',4:'You are not alone.',5:'Welcome home.'};
             const utterance=new SpeechSynthesisUtterance(phrases[level]);
             utterance.lang='en-US';utterance.rate=.66;utterance.pitch=.12;utterance.volume=.16;
             utterance.onend=()=>{if(whisperVersion===version)whisperPhase=null;};
+            let failed=false;
+            utterance.onerror=()=>{if(!failed){failed=true;whisperBurst(level,version);}};
             window.speechSynthesis.speak(utterance);
           },2600);
         }

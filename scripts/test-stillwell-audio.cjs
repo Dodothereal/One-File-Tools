@@ -12,7 +12,7 @@ let cancels = 0;
 let spoken = [];
 let buffers = [];
 const param = () => ({ value: 0, cancelScheduledValues() {}, cancelAndHoldAtTime() {}, setValueAtTime(v) { this.value = v; }, setTargetAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime(v, t) { this.ramp = [v, t]; } });
-const node = () => ({ gain: param(), frequency: param(), detune: param(), threshold: param(), ratio: param(), connect() {}, disconnect() { this.disconnected = true; }, start() {}, stop() { this.stopped = true; } });
+const node = () => ({ gain: param(), frequency: param(), Q: param(), detune: param(), threshold: param(), ratio: param(), connect(target) { this.target = target; }, disconnect() { this.disconnected = true; }, start() {}, stop() { this.stopped = true; } });
 class Context {
   constructor() { this.currentTime = 10; this.sampleRate = 1000; this.destination = {}; }
   createGain() { return node(); }
@@ -31,7 +31,7 @@ function element(key) {
 const sandbox = {
   console, Float32Array,
   document: { body: element('body'), documentElement: { style: {}, scrollHeight: 10000 }, hidden: false, querySelector: element, querySelectorAll: () => [], addEventListener(type, fn) { events[type] = fn; } },
-  window: { AudioContext: Context, innerHeight: 800, scrollY: 0, matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, scrollTo() {}, location: {}, speechSynthesis: { cancel() { cancels++; }, speak(u) { spoken.push(u); } } },
+  window: { AudioContext: Context, innerHeight: 800, scrollY: 0, matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, scrollTo() {}, location: {}, speechSynthesis: { getVoices: () => [{}], cancel() { cancels++; }, speak(u) { spoken.push(u); } } },
   SpeechSynthesisUtterance: function(text) { this.text = text; },
   setTimeout(fn, ms) { timers.set(++id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
   setInterval() { return 1; }, clearInterval() {}, requestAnimationFrame() {},
@@ -77,6 +77,22 @@ const fire = ms => { for (const [key, timer] of [...timers]) if (timer.ms === ms
   assert(data.every(Number.isFinite));
   assert.match(script, /raw\[data.length\+i\]\*\(1-mix\)\+raw\[i\]\*mix/);
   console.log('PASS brown-noise seam uses adjacent continuation samples with a 100ms crossfade');
+  sandbox.window.speechSynthesis.getVoices = () => [];
+  api.resetExperience(); api.setPhase(3); fire(2600);
+  const fallback = [...api.shots].find(s => s.filter);
+  assert(fallback); assert.equal(fallback.phase, 3);
+  assert.equal(fallback.filter.type, 'bandpass'); assert.equal(fallback.gain.target, api.audio.master);
+  api.setPhase(2); assert(fallback.osc.stopped && fallback.filter.disconnected); assert(!api.shots.has(fallback));
+  console.log('PASS zero voices plays band-passed whisper fallback through master; retreat stops and disconnects it');
+  sandbox.window.speechSynthesis.getVoices = () => [{}];
+  api.setPhase(3); fire(2600);
+  const utterance = spoken.at(-1); utterance.onerror({ error: 'synthesis-failed' });
+  assert.equal([...api.shots].filter(s => s.filter).length, 1);
+  utterance.onerror({ error: 'synthesis-failed' });
+  assert.equal([...api.shots].filter(s => s.filter).length, 1);
+  api.resetExperience(); assert.equal(api.shots.size, 0);
+  utterance.onerror({ error: 'synthesis-failed' }); assert.equal(api.shots.size, 0);
+  console.log('PASS synthesis error plays one fallback; reset cleans it up and stale errors cannot restart it');
   await click(); sandbox.window.AudioContext = undefined;
   delete sandbox.window.speechSynthesis;
   api.scheduleWhisper(3);
