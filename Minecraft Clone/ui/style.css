@@ -13,12 +13,13 @@ body { margin: 0; min-width: 290px; min-height: 100dvh; overflow: hidden; }
 #world { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; }
 .wordmark { pointer-events: none; position: fixed; z-index: 2; top: 29px; left: clamp(20px, 5vw, 76px); display: flex; align-items: center; gap: 12px; font: 700 11px var(--mono); letter-spacing: .11em; text-shadow: 0 1px 4px #101813; }
 .wordmark b, .accent, .world-tag b, .chat p b { color: var(--lime); }
 .brand-cube { width: 19px; height: 21px; background: conic-gradient(from 60deg at 50% 51%, #72914c 0deg 120deg, #9dbb60 120deg 240deg, var(--lime) 240deg); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 .mark-divider { height: 16px; width: 1px; background: #d4e3cf5e; }
-.overlay { position: fixed; inset: 0; display: flex; align-items: center; padding: 75px clamp(20px, 5vw, 76px) 38px; background: linear-gradient(90deg, #0b1512f4 0%, #101c17ed 28%, #101c1790 54%, #101c1724 83%), linear-gradient(0deg,#131e19a8,transparent 35%); overflow: auto; }
+.overlay { position: fixed; inset: 0; background: linear-gradient(90deg, #0b1512f4 0%, #101c17ed 28%, #101c1790 54%, #101c1724 83%), linear-gradient(0deg,#131e19a8,transparent 35%); }
+.menu-scroll { position: absolute; inset: 64px 0 0; display: flex; padding: 11px clamp(20px, 5vw, 76px) 38px; overflow: auto; }
 .menu { width: min(100%, 570px); margin-block: auto; position: relative; z-index: 1; }
 .eyebrow { display: flex; align-items: center; gap: 11px; color: var(--lime); font: 700 11px var(--mono); letter-spacing: .17em; }
 .live-dot { width: 7px; height: 7px; display: inline-block; background: var(--lime); box-shadow: 0 0 13px #d2f67882; }
@@ -36,6 +37,9 @@ h2 { font-size: clamp(40px, 6.5vw, 77px); }
 .secondary:hover { border-color: var(--lime); }
 .primary span, .secondary span { font: 700 20px var(--mono); }
 .control-guide, .hud-tip { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 21px; color: var(--muted); font: 11px var(--mono); }
+.menu-footer { margin-top: 20px; font: 11px var(--mono); }
+.menu-footer a { color: var(--muted); text-underline-offset: 3px; }
+.menu-footer a:hover { color: var(--lime); }
 kbd { font: 700 10px var(--mono); padding: 3px 5px; border: 1px solid #afc7ae55; color: #f5f8ee; background: #15221cd9; white-space: nowrap; }
 .world-tag { position: fixed; right: clamp(20px, 5vw, 76px); bottom: 38px; border-left: 2px solid var(--lime); padding: 4px 13px; text-shadow: 0 2px 12px #0b160d; }
 .world-tag span, .world-tag small { display: block; font: 700 10px var(--mono); letter-spacing: .13em; }
@@ -64,8 +68,8 @@ kbd { font: 700 10px var(--mono); padding: 3px 5px; border: 1px solid #afc7ae55;
 .slot.selected { border: 2px solid var(--lime); background: #395239dd; box-shadow: 0 0 12px #d2f67e61; }
 .slot canvas { width: 53%; height: auto; image-rendering: pixelated; filter: drop-shadow(2px 3px 0 #0d180d7d); }
 .slot span { position: absolute; left: 3px; top: 2px; font: 9px var(--mono); color: #e8eddd; }
-.chat { position: fixed; z-index: 3; bottom: clamp(83px, 17vh, 139px); left: clamp(10px, 5vw, 76px); width: min(calc(100% - 20px), 535px); font: 13px var(--mono); background: #101916ed; border: 1px solid #a4bda280; box-shadow: 0 6px 30px #080f0ac9; }
-#chat-log { padding: 9px 14px; max-height: 30vh; min-height: 50px; overflow: auto; white-space: pre-wrap; color: #e6edda; }
+.chat { position: fixed; z-index: 3; bottom: clamp(83px, 17vh, 139px); left: clamp(10px, 5vw, 76px); width: min(calc(100% - 20px), 535px); font: 13px var(--mono); background: #101916; border: 1px solid #a4bda280; box-shadow: 0 6px 30px #080f0ac9; overflow: clip; }
+#chat-log { padding: 9px 14px; max-height: 30vh; min-height: 50px; overflow: auto; contain: paint; scrollbar-gutter: stable; scrollbar-color: #809088 #1a2820; white-space: pre-wrap; color: #e6edda; }
 #chat-log p { margin: 3px 0; }
 #chat-log .entry { color: var(--lime); }
 #chat-form { display: flex; align-items: center; padding: 9px 14px; border-top: 1px solid #a4bda240; color: var(--lime); gap: 9px; }

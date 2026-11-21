@@ -66,6 +66,12 @@ class Game {
     document.addEventListener('pointerlockchange', () => {
       this.keys.clear();
       if (document.pointerLockElement === this.canvas) {
+        if (!this.started) {
+          window.addEventListener('beforeunload', event => {
+            event.preventDefault();
+            event.returnValue = true;
+          });
+        }
         this.started = true;
         this.ui.show('play');
         this.canvas.focus();
@@ -79,6 +85,7 @@ class Game {
     window.addEventListener('keydown', event => {
       if (this.ui.view !== 'play') return;
       const { code } = event;
+      if (event.ctrlKey) event.preventDefault();
       if (!event.ctrlKey && (code === 'Slash' || code === 'Enter')) {
         event.preventDefault();
         this.ui.openChat(code === 'Slash' ? '/' : '');

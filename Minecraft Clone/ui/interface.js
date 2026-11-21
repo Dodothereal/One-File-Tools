@@ -71,6 +71,7 @@ export class Interface {
     el('overlay').hidden = view === 'play' || view === 'chat';
     el('menu').hidden = view !== 'menu';
     el('settings-panel').hidden = view !== 'settings';
+    el('menu-scroll').scrollTop = 0;
     el('hud').hidden = view !== 'play' && view !== 'chat';
     el('chat').hidden = view !== 'chat';
     if (this.game.started) {
