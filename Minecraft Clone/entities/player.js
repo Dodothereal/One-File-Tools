@@ -78,7 +78,7 @@ export class Player {
     const forward = down('KeyW') - down('KeyS'), side = down('KeyD') - down('KeyA');
     const [x, y, z] = this.position;
     const water = blocks[world.get(Math.floor(x), Math.floor(y + .45), Math.floor(z))].liquid;
-    const sprint = keys.has('ControlLeft') || keys.has('ControlRight');
+    const sprint = keys.has('KeyR');
     const descend = keys.has('ShiftLeft') || keys.has('ShiftRight');
     const speed = (this.flying ? sprint ? 22 : 10 : water ? 2.6 : sprint ? 7.2 : descend ? 2.1 : 4.6) * dt /
       (Math.hypot(forward, side) || 1);

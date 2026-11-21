@@ -88,6 +88,7 @@ export class Interface {
 
   show(view) {
     this.view = view;
+    el('performance').hidden = !this.game.settings.overlay || (view !== 'play' && view !== 'chat');
     this.flight.show(view);
     el('overlay').hidden = view === 'play' || view === 'chat';
     el('menu').hidden = view !== 'menu';
@@ -133,7 +134,7 @@ export class Interface {
     el('dimension-name').textContent = biome ? `${world.dimension.name} · ${biome}` : world.dimension.name;
     el('location').textContent = `XYZ  ${x} / ${y} / ${z}`;
     el('statusline').textContent = `${camera.mode?.name ?? 'Preview'}  /  ${player.flying ? 'Flying' : player.mode}  /  ${fps} FPS · ${drawn} tiles`;
-    el('performance').hidden = !this.game.settings.overlay;
+    el('performance').hidden = !this.game.settings.overlay || (this.view !== 'play' && this.view !== 'chat');
     el('performance').textContent = `${fps} FPS · ${this.game.frameMs?.toFixed(1) ?? '—'} ms\n${drawn} tiles · ${this.game.renderer.triangles ?? 0} triangles\nQueue ${this.game.stream.jobs.length + this.game.stream.dirty.size} · ${this.game.settings.preset} · ${this.game.settings.distance} chunks`;
     const signature = `${player.slot}:${player.hotbar.join(',')}`;
     if (signature === this.hotbarSignature) return;
