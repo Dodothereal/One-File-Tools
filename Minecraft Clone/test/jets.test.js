@@ -84,6 +84,14 @@ test('jets accelerate and bank; boost is distinct and collision safely returns t
   assert.deepEqual(player.position, [.5,1.01,.5]);
 });
 
+test('an isolated block in the inner wing path triggers an emergency return', () => {
+  const { world, jet, player } = hangar('kestrel');
+  world.set(1, 10, 9, STONE);
+  for (let i = 0; i < 100 && player.vehicle; i++) player.step(dt, new Set(), world);
+  assert.equal(jet.crashed, true);
+  assert.equal(player.vehicle, null);
+});
+
 test('the primary cannon is rate limited, sweeps projectiles, and chips one block', () => {
   const { world, jet, weapons } = hangar('kestrel');
   world.set(0, 10, 8, STONE);

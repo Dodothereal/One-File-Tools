@@ -36,6 +36,16 @@ export function findLaunchSite(world, [x,y,z], spec) {
   return null;
 }
 
+function wingProbes(shape) {
+  return shape.flatMap(({ wing, origin: [x,y,z], size: [width,height,depth] }) => {
+    if (!wing) return [];
+    const samples = Math.ceil(depth/.65);
+    return Array.from({ length: samples+1 }, (_,i) => [
+      -(x+width/2), y+height/2, z+depth*i/samples,
+    ]);
+  });
+}
+
 export class Jet extends Vehicle {
   constructor(id, position, pilot, mesh, weapons, world) {
     super();
@@ -55,7 +65,7 @@ export class Jet extends Vehicle {
     this.weapons = weapons;
     const { span, length } = this.spec;
     this.probes = [[0,0,0], [0,0,length], [0,0,-length], [0,1.35,-1.8],
-      [0,-.5,0], [span,-.1,-1.5], [-span,-.1,-1.5], [span*.57,-.1,-.4], [-span*.57,-.1,-.4]];
+      [0,-.5,0], [span,-.1,-1.5], [-span,-.1,-1.5], ...wingProbes(this.spec.shape)];
   }
 
   axes() {
@@ -93,8 +103,9 @@ export class Jet extends Vehicle {
       const block = blocks[world.get(x,y,z)];
       return block.solid || block.liquid;
     };
-    if (next[1] < 2 || this.probes.some(([x,y,z]) =>
-      sweep(world, offset(this.position, prev, x,y,z), offset(next, axes, x,y,z), hitsTerrain))) {
+    const terrainInReach = Math.min(next[1], this.position[1]) < HEIGHT + this.spec.length + this.spec.span;
+    if (next[1] < 2 || (terrainInReach && this.probes.some(([x,y,z]) =>
+      sweep(world, offset(this.position, prev, x,y,z), offset(next, axes, x,y,z), hitsTerrain)))) {
       this.crashed = true;
       this.eject(pilot);
       return;

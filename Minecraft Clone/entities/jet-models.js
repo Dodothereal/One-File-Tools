@@ -22,7 +22,7 @@ const mirrored = (x, y, z, w, h, l, color) =>
   [box(-x,y,z,w,h,l,color), box(x,y,z,w,h,l,color)];
 const sweep = (steps, step, first, advance, chord, taper, color) =>
   Array.from({ length: steps }, (_,i) => mirrored(.55 + (i+.5)*step, -.19, first-i*advance,
-    step, .25, chord-i*taper, color)).flat();
+    step, .25, chord-i*taper, color)).flat().map(part => ({ ...part, wing: true }));
 
 export const jets = {
   kestrel: {
