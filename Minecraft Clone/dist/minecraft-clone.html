@@ -78,7 +78,8 @@ kbd { font: 700 10px var(--mono); padding: 3px 5px; border: 1px solid #afc7ae55;
 .slot canvas { width: 53%; height: auto; image-rendering: pixelated; filter: drop-shadow(2px 3px 0 #0d180d7d); }
 .slot span { position: absolute; left: 3px; top: 2px; font: 9px var(--mono); color: #e8eddd; }
 .chat { position: fixed; z-index: 3; bottom: clamp(83px, 17vh, 139px); left: clamp(10px, 5vw, 76px); width: min(calc(100% - 20px), 535px); font: 13px var(--mono); background: #101916; border: 1px solid #a4bda280; box-shadow: 0 6px 30px #080f0ac9; overflow: clip; }
-#chat-log { padding: 9px 14px; max-height: 30vh; min-height: 50px; overflow: auto; contain: paint; scrollbar-gutter: stable; scrollbar-color: #809088 #1a2820; white-space: pre-wrap; color: #e6edda; }
+#chat-log { padding: 9px 14px; max-height: 30vh; min-height: 50px; overflow: auto; contain: paint; scrollbar-width: none; white-space: pre-wrap; color: #e6edda; }
+#chat-log::-webkit-scrollbar { display: none; }
 #chat-log p { margin: 3px 0; }
 #chat-log .entry { color: var(--lime); }
 #chat-form { display: flex; align-items: center; padding: 9px 14px; border-top: 1px solid #a4bda240; color: var(--lime); gap: 9px; }
