@@ -143,6 +143,7 @@
         const announcements = ['Welcome to Stillwell.','The feeling: small details begin to change.','The practice: a presence appears in the room.','Your place: the site is no longer what it seemed.','You have entered the lower corridor.','The presence reveals itself. You can return to calm at any time.'];
         function updateMotion() {
           body.classList.toggle('reduced-motion',reducedMotion);
+          document.documentElement.style.scrollBehavior = reducedMotion ? 'auto' : '';
           motionButton.setAttribute('aria-pressed',String(reducedMotion));
           motionButton.textContent = reducedMotion ? 'Motion reduced' : 'Reduce motion';
         }
