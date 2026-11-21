@@ -2,11 +2,15 @@ export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 export const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
 export const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
 
-export function viewAxes(yaw, pitch) {
+export function viewAxes(yaw, pitch, roll = 0) {
   const c = Math.cos(pitch);
   const forward = [Math.sin(yaw)*c, Math.sin(pitch), Math.cos(yaw)*c];
   const right = [-Math.cos(yaw), 0, Math.sin(yaw)];
-  return { forward, right, up: cross(right, forward) };
+  const up = cross(right, forward);
+  if (!roll) return { forward, right, up };
+  const s = Math.sin(roll),
+    r = Math.cos(roll);
+  return { forward, right: right.map((n, i) => n * r + up[i] * s), up: up.map((n, i) => n * r - right[i] * s) };
 }
 
 export function viewProjection(camera, aspect, far) {

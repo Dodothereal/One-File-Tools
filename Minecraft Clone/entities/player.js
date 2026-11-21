@@ -23,6 +23,7 @@ export class Player {
   }
 
   moveTo(position) {
+    this.vehicle = null;
     this.position = position.slice();
     this.velocity = 0;
     this.grounded = false;
@@ -40,6 +41,10 @@ export class Player {
   }
 
   look(dx, dy, sensitivity) {
+    if (this.vehicle?.look) {
+      this.vehicle.look(dx, dy, sensitivity);
+      return;
+    }
     this.yaw -= dx * sensitivity * .002;
     this.pitch = clamp(this.pitch - dy * sensitivity * .002, -1.55, 1.55);
   }
