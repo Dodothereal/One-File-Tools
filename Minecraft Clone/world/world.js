@@ -65,7 +65,28 @@ export class World {
 
   spawn(x = 0, z = 0) {
     const position = this.generator.spawn?.(x, z);
-    if (position) return position;
+    if (position) {
+      const [sx, sy, sz] = position.map(Math.floor);
+      const clear = (x, y, z) => this.get(x, y, z) === AIR && this.get(x, y + 1, z) === AIR;
+      if (clear(sx, sy, sz)) return position;
+      for (let distance = 1; distance <= HEIGHT - sy; distance++) {
+        for (let dy = -distance; dy <= distance; dy++) {
+          const y = sy + dy;
+          if (y < 1) continue;
+          const horizontal = distance - Math.abs(dy);
+          for (let dx = -horizontal; dx <= horizontal; dx++) {
+            const dz = horizontal - Math.abs(dx);
+            for (const z of dz ? [sz - dz, sz + dz] : [sz]) {
+              const x = sx + dx;
+              if (clear(x, y, z) && blocks[this.get(x, y - 1, z)].solid) {
+                return [x + .5, y + .01, z + .5];
+              }
+            }
+          }
+        }
+      }
+      return [sx + .5, HEIGHT + .01, sz + .5];
+    }
     let y = HEIGHT - 1;
     while (y > 0 && this.get(x, y, z) === AIR) y--;
     return [x + 0.5, y + 1.01, z + 0.5];

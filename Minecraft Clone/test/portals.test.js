@@ -31,6 +31,47 @@ test('obsidian frames light in both orientations including maximum size', () => 
   }
 });
 
+test('setblock and fill light completed Nether frames after applying their edits', () => {
+  for (const command of ['/setblock -9 3 -1 obsidian', '/fill -9 3 -1 -8 3 -1 obsidian']) {
+    const world = emptyWorld();
+    const point = frame(world, 2, 3, 'x', true);
+    if (command.startsWith('/fill')) world.set(...point(2, 0), AIR);
+    assert.equal(world.get(...point(1, 1)), AIR);
+    createCommands().execute(command, { world, player: { position: [0, 0, 0] } });
+    assert.equal(world.get(...point(1, 1)), B.nether_portal, command);
+    assert.equal(world.get(...point(2, 3)), B.nether_portal, command);
+  }
+});
+
+test('fill can clear an obstruction away from a frame edge', () => {
+  const world = emptyWorld();
+  const point = frame(world, 7, 9);
+  world.set(...point(4, 4), STONE);
+  world.set(...point(4, 5), STONE);
+  createCommands().execute('/fill -6 7 -1 -6 8 -1 air', { world, player: { position: [0, 0, 0] } });
+  assert.equal(world.get(...point(4, 4)), B.nether_portal);
+  assert.equal(world.get(...point(7, 9)), B.nether_portal);
+});
+
+test('clearing 32 cubed blocks bounds portal scan work', () => {
+  const world = emptyWorld();
+  for (let y = 16; y < 48; y++) for (let z = 0; z < 32; z++) for (let x = 0; x < 32; x++) {
+    world.set(x, y, z, STONE);
+  }
+  const get = world.get.bind(world);
+  let reads = 0;
+  world.get = (x, y, z) => {
+    reads++;
+    return get(x, y, z);
+  };
+  const commands = createCommands();
+  const start = performance.now();
+  assert.equal(commands.execute('/fill 0 16 0 31 47 31 air', { world, player: { position: [0, 0, 0] } }), 'Changed 32768 blocks.');
+  const elapsed = performance.now() - start;
+  assert(reads < 32768 * 40, `${reads} block reads`);
+  assert(elapsed < 1000, `${elapsed.toFixed(0)} ms`);
+});
+
 test('open, obstructed, undersized and oversized frames do not light', () => {
   for (const [width, height, missing, obstructed] of [[2, 3, true, false], [1, 3], [2, 2], [22, 3], [2, 22], [2, 3, false, true]]) {
     const world = emptyWorld(), point = frame(world, width, height, 'x', missing);

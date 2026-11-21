@@ -59,6 +59,12 @@ test("launch selects open space or declines when a cavern is obstructed", () => 
   assert.equal(findLaunchSite(cavern, [0.5, 1, 0.5], jets.eventide), null);
 });
 
+test("open skies allow launches above the old limit and at the flight ceiling", () => {
+  const world = new World(dimensions.get("overworld"), 2391);
+  assert.deepEqual(findLaunchSite(world, [0.5, 106, 0.5], jets.kestrel), [0.5, 115.5, 0.5]);
+  assert.deepEqual(findLaunchSite(world, [0.5, 200, 0.5], jets.kestrel), [0.5, 199.5, 0.5]);
+});
+
 test("idle Overworld departures climb over the terrain ahead of the default spawn", () => {
   const world = new World(dimensions.get("overworld"), 2391);
   for (const id of Object.keys(jets)) {

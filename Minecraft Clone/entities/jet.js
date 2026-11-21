@@ -7,6 +7,7 @@ import { jets } from "./jet-models.js";
 
 const solid = (world) => (x, y, z) => blocks[world.get(x, y, z)].solid;
 const approach = (value, target, dt, rate) => value + (target - value) * (1 - Math.exp(-dt * rate));
+const FLIGHT_CEILING = HEIGHT + 104;
 
 export function offset(position, { right, up, forward }, x, y, z) {
   return position.map((n, i) => n + right[i] * x + up[i] * y + forward[i] * z);
@@ -28,8 +29,9 @@ function sweep(world, from, to, accepts = solid(world)) {
 export function findLaunchSite(world, [x, y, z], spec) {
   const radius = Math.ceil(Math.max(spec.span, spec.length));
   const enclosed = world.dimension.enclosed || world.dimension.id === "nether";
-  const roof = enclosed ? HEIGHT - 19 : HEIGHT + 18;
-  const floor = Math.max(5, Math.floor(y) + 9);
+  const roof = enclosed ? HEIGHT - 19 : FLIGHT_CEILING - 1;
+  const preferred = Math.max(5, Math.floor(y) + 9);
+  const floor = enclosed ? preferred : Math.min(preferred, roof);
   for (let level = floor; level <= roof; level += 4) {
     const launchY = enclosed ? roof - (level - floor) : level;
     let clear = true;
@@ -119,8 +121,8 @@ export class Jet extends Vehicle {
       this.eject(pilot);
       return;
     }
-    if (next[1] > HEIGHT + 104) {
-      next[1] = HEIGHT + 104;
+    if (next[1] > FLIGHT_CEILING) {
+      next[1] = FLIGHT_CEILING;
       this.desiredPitch = Math.min(this.desiredPitch, 0);
     }
     pilot.position = this.position = next;

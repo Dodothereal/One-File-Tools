@@ -122,16 +122,32 @@ function enclosedNetherFrame(world, point, minU, maxU, minY, maxY, area) {
 }
 
 export function lightNetherFrame(world, placed) {
+  return lightFromEdit(world, placed);
+}
+
+export function lightNetherFrames(world, edits) {
+  if (edits.length === 1) return lightNetherFrame(world, edits[0]);
+  const scanned = new Map();
+  for (const edit of edits) lightFromEdit(world, edit, scanned);
+}
+
+function lightFromEdit(world, placed, scanned) {
   const changed = world.get(...placed);
-  if (changed !== B.obsidian && changed !== AIR) return false;
-  for (const axis of ['x', 'z']) for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+  if (changed !== B.obsidian && changed !== AIR && !(scanned && changed === B.nether_portal)) return false;
+  const reach = scanned && changed !== B.obsidian ? 0 : 1;
+  for (const axis of ['x', 'z']) for (let a = -reach; a <= reach; a++) for (let b = -reach; b <= reach; b++) {
+    const plane = `${axis}:${placed[axis === 'x' ? 2 : 0]}`;
+    if (scanned && !scanned.has(plane)) scanned.set(plane, new Set());
+    const checked = scanned?.get(plane);
     const point = (u, y) => axis === 'x' ? [u, y, placed[2]] : [placed[0], y, u];
     const startU = placed[axis === 'x' ? 0 : 2] + a, startY = placed[1] + b;
+    if (checked?.has(`${startU},${startY}`)) continue;
     const pending = [[startU, startY]], visited = new Map();
     let minU = startU, maxU = startU, minY = startY, maxY = startY, valid = true;
     while (pending.length && valid) {
       const [u, y] = pending.pop(), key = `${u},${y}`;
       if (visited.has(key)) continue;
+      if (checked?.has(key)) { valid = false; break; }
       const id = world.get(...point(u, y));
       if (id === B.obsidian) continue;
       if ((id !== AIR && id !== B.nether_portal) || y < 1 || y > 94) { valid = false; break; }
@@ -141,10 +157,11 @@ export function lightNetherFrame(world, placed) {
       if (maxU - minU >= 21 || maxY - minY >= 21) { valid = false; break; }
       pending.push([u + 1, y], [u - 1, y], [u, y + 1], [u, y - 1]);
     }
+    if (checked) for (const key of visited.keys()) checked.add(key);
     if (valid && enclosedNetherFrame(world, point, minU, maxU, minY, maxY, visited.size)) {
       for (const [u, y] of visited.values()) world.set(...point(u, y), B.nether_portal, false);
       removeNetherPortal(world, placed);
-      return true;
+      if (!scanned) return true;
     }
   }
   return false;
