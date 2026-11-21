@@ -30,8 +30,10 @@ requests are needed to play.
 Graphics settings persist locally where browser storage is available. World edits
 are kept in memory for the current page session, including across dimension changes.
 Creative is the default; survival mode currently changes movement and reach, not
-health, hunger, or crafting. Nether, End, and City are registered but not playable
-yet. Cockpit view falls back to first person until a vehicle supplies a camera.
+health, hunger, or crafting. Use `/dimension nether` to visit the Nether's lava
+seas, forests, caves and bridges. End and City have block palettes but are not
+playable yet. Portal blocks are decorative until travel is implemented.
+Cockpit view falls back to first person until a vehicle supplies a camera.
 
 ## ARCHITECTURE
 
@@ -42,6 +44,11 @@ yet. Cockpit view falls back to first person until a vehicle supplies a camera.
   `generate({ x, z, size, height, set })` and optionally
   `surface(x, z) → { y, id, biome }` for distant terrain. `World` caches 16×96×16
   voxel chunks and overlays sparse edits; the data store is renderer-independent.
+  Generators may supply `spawn(x, z)` returning a safe `[x, y, z]` position (or
+  nothing to use the surface scan), useful beneath the Nether's bedrock roof.
+  `world/blocks_dimensions.js` registers additional procedural palettes through
+  `blocks.js`. Blocks with `glow: true` ignore face shading and daylight (but
+  still receive distance fog); dimension `fog` overrides the default horizon fog.
 - **`engine/`**: `meshChunk(data, neighbors)` consumes typed arrays, with neighbors
   ordered +X, −X, +Z, −Z, and returns transferable opaque and liquid vertex arrays.
   `ChunkStream` prioritizes local tiles, invalidates edited boundaries, and

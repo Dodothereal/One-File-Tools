@@ -22,7 +22,7 @@ test('Overworld is deterministic with terrain, water and caves; stubs are regist
   const region = [-2,-1,0,1].flatMap(x => [-1,0,1,2].map(z => first.chunk(x,z)));
   assert(region.some(chunk => chunk.includes(WATER)));
   assert(region.some(chunk => chunk.subarray(SIZE*SIZE*4, SIZE*SIZE*12).includes(AIR)));
-  assert.deepEqual([...dimensions.values()].filter(d => !d.create).map(d => d.id), ['nether','end','city']);
+  assert.deepEqual([...dimensions.values()].filter(d => !d.create).map(d => d.id), ['end','city']);
 });
 
 test('edits use floor-based chunk addresses and survive bounds pruning', () => {

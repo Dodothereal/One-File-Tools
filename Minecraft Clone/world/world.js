@@ -62,6 +62,8 @@ export class World {
   }
 
   spawn(x = 0, z = 0) {
+    const position = this.generator.spawn?.(x, z);
+    if (position) return position;
     let y = HEIGHT - 1;
     while (y > 0 && this.get(x, y, z) === AIR) y--;
     return [x + 0.5, y + 1.01, z + 0.5];

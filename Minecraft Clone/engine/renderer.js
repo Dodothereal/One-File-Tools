@@ -75,7 +75,7 @@ void main() {
   vec2 texel = vec2(mod(tile,${COLS}.),floor(tile/${COLS}.))*${TILE}. + clamp(uv*${TILE}., .5, ${TILE - 0.5});
   vec3 base = texture(atlas,texel/vec2(textureSize(atlas,0))).rgb;
   vec3 light = mix(vec3(.27,.36,.55),vec3(1.05,1.03,.96),daylight);
-  vec3 lit = base * shade * light;
+  vec3 lit = shade < 0. ? base : base * shade * light;
   float haze = smoothstep(fog.x,fog.y,fogDepth);
   color = vec4(mix(lit,horizon,haze),alpha);
 }`;
@@ -212,7 +212,7 @@ export class Renderer {
     gl.uniform1i(voxel.atlas, 0);
     gl.uniformMatrix4fv(voxel.vp, false, vp);
     gl.uniform2f(voxel.fog, radius*.60, radius);
-    gl.uniform3fv(voxel.horizon, horizon);
+    gl.uniform3fv(voxel.horizon, dimension.fog ?? horizon);
     gl.uniform1f(voxel.daylight, daylight);
     gl.uniform1f(voxel.alpha, 1);
     gl.uniform2f(voxel.rotation, 1, 0);
