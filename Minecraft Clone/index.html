@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111a19">
+  <meta name="description" content="A procedural voxel sandbox. Explore the Overworld, build, and fly.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./ui/style.css">
+  <title>Minecraft Clone · Overworld</title>
+</head>
+<body>
+  <canvas id="world" aria-label="Voxel world"></canvas>
+  <pre id="performance" hidden></pre>
+  <header class="wordmark"><span class="brand-cube" aria-hidden="true"></span><span>MC <b>/</b> VOL. 01</span><span class="mark-divider"></span><span>WORLD ENGINE</span></header>
+  <div id="hud" hidden>
+    <div class="telemetry"><div><span class="live-dot"></span><strong id="dimension-name">Overworld</strong></div><p id="location"></p><p id="statusline"></p></div>
+    <div class="hud-tip"><kbd>F5</kbd> Perspective <kbd>/</kbd> Commands <kbd>ESC</kbd> Pause</div>
+    <div class="crosshair" aria-hidden="true"></div>
+    <div class="inventory"><p id="selected-name"></p><div id="hotbar" aria-label="Hotbar"></div></div>
+  </div>
+  <main class="overlay" id="overlay">
+    <div class="menu-scroll" id="menu-scroll">
+      <section class="menu" id="menu" aria-labelledby="menu-title">
+        <div class="eyebrow"><span class="live-dot"></span> FIELD GUIDE <span class="eyebrow-line"></span> 001</div>
+        <h1 id="menu-title">MINECRAFT<span>CLONE<span class="accent">.</span></span></h1>
+        <p class="intro" id="intro">A world built one block at a time. Break ground in a living, procedural Overworld.</p>
+        <div class="menu-actions">
+          <button id="play" class="primary">Enter Overworld <span aria-hidden="true">→</span></button>
+          <button id="settings" class="secondary">Graphics &amp; controls <span aria-hidden="true">⌘</span></button>
+        </div>
+        <div class="control-guide"><span><kbd>W A S D</kbd> Move</span><span><kbd>SPACE</kbd> Jump</span><span><kbd>R</kbd> Hold to sprint</span><span><kbd>F5</kbd> View</span></div>
+        <p id="notice" role="status" hidden></p>
+        <footer class="menu-footer"><a href="https://github.com/Dodothereal/One-File-Tools" target="_blank" rel="noopener noreferrer">One File Tools on GitHub <span aria-hidden="true">↗</span></a></footer>
+      </section>
+      <section class="menu settings-panel" id="settings-panel" aria-labelledby="settings-title" hidden>
+        <div class="eyebrow"><span class="live-dot"></span> FIELD GUIDE <span class="eyebrow-line"></span> 002</div>
+        <h2 id="settings-title">TUNE YOUR<br>WORLD<span class="accent">.</span></h2>
+        <p class="intro">Set your view. Performance and detail are yours to balance.</p>
+        <label>Quality preset <select id="preset"></select></label>
+        <fieldset><legend>Quality</legend>
+        <label>Render distance <output id="distance-value"></output><input type="range" id="distance" min="2" max="64"></label>
+        <label>Full-detail ring <output id="detail-value"></output><input type="range" id="detail" min="1" max="7"></label>
+        <label class="toggle">Procedural clouds <input type="checkbox" id="clouds"></label>
+        <label class="toggle">Smooth lighting / AO <input type="checkbox" id="ao"></label>
+        <label>Fog quality <select id="fog"><option value="low">Low</option><option value="high">High</option></select></label>
+        <label class="toggle">Animated water <input type="checkbox" id="water"></label>
+        <label class="toggle">Tone mapping / glow / vignette <input type="checkbox" id="post"></label>
+        </fieldset><fieldset><legend>Performance</legend>
+        <label>Resolution scale <output id="scale-value"></output><input type="range" id="scale" min=".5" max="1" step=".05"></label>
+        <label>FPS limit <select id="fpsLimit"><option value="30">30</option><option value="60">60</option><option value="120">120</option><option value="0">Unlimited</option></select></label>
+        <label>Streaming budget <output id="budget-value"></output><input type="range" id="budget" min="1" max="12" step=".5"></label>
+        <label class="toggle">Show performance overlay <input type="checkbox" id="show-overlay"></label>
+        </fieldset><fieldset><legend>Camera &amp; controls</legend>
+        <label>Field of view <output id="fov-value"></output><input type="range" id="fov" min="60" max="105"></label>
+        <label>Look sensitivity <output id="sensitivity-value"></output><input type="range" id="sensitivity" min=".25" max="3" step=".05"></label>
+        </fieldset>
+        <button class="secondary" id="back">Back <span aria-hidden="true">←</span></button>
+      </section>
+    </div>
+    <aside class="world-tag"><span>THE FIELD GUIDE / 01</span><strong id="world-name">Overworld</strong><small>PROCEDURAL TERRAIN <b>·</b> SINGLEPLAYER</small></aside>
+  </main>
+  <div id="chat" class="chat" hidden>
+    <div id="chat-log" role="log" aria-live="polite"></div>
+    <form id="chat-form"><label for="command">/</label><input id="command" aria-label="World command" placeholder="/help" maxlength="180" autocomplete="off" spellcheck="false"></form>
+    <p>ENTER TO RUN <b>·</b> ESC TO CLOSE</p>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
