@@ -8,7 +8,7 @@ export function portalTarget(block, current) {
 }
 
 export function portalShape(kind, x, y, z, axis = 'x', approach = true) {
-  if (!portalIds[kind]) return [];
+  if (!Object.hasOwn(portalIds, kind)) return [];
   const result = [];
   const put = (u, v, depth, id) => result.push([x + (axis === 'x' ? u : depth), y + v, z + (axis === 'x' ? depth : u), id]);
   const width = kind === 'nether' ? 4 : 5;
@@ -224,7 +224,7 @@ export function updatePortalTravel(game, dt, dimensions) {
 }
 
 export function buildPortal(game, kind) {
-  if (!portalIds[kind]) return 'Usage: /portal <nether|end|city>';
+  if (!Object.hasOwn(portalIds, kind ?? '')) return 'Usage: /portal <nether|end|city>';
   const { player, world } = game;
   const alongX = Math.abs(Math.sin(player.yaw)) > Math.abs(Math.cos(player.yaw));
   const fx = alongX ? Math.sign(Math.sin(player.yaw)) : 0;

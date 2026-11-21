@@ -56,7 +56,7 @@ class Game {
     const position = this.world.spawn(x, z);
     if (!this.player) {
       this.player = new Player(position);
-      this.player.yaw = -.5;
+      this.player.yaw = Math.PI;
     } else {
       this.player.vehicle = null;
       this.player.moveTo(position);

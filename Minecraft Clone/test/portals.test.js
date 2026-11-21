@@ -277,6 +277,11 @@ test('portal command validates input and builds in front; dimension commands sup
   const game = { world: emptyWorld(), player: new Player([0, 10, 0]), enterDimension(d) { this.dimension = d; } };
   assert.match(registry.execute('/portal', game), /Usage/);
   assert.match(registry.execute('/portal unknown', game), /Usage/);
+  for (const kind of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    assert.match(registry.execute(`/portal ${kind}`, game), /Usage/);
+    assert.deepEqual(portalShape(kind, 0, 10, 0), []);
+  }
+  assert.equal(game.world.edits.size, 0);
   for (const kind of ['nether', 'end', 'city']) {
     game.world = emptyWorld();
     assert.match(registry.execute(`/portal ${kind}`, game), /Built/);
