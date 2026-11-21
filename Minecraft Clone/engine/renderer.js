@@ -1,5 +1,5 @@
 import { COLS, TILE } from './atlas.js';
-import { viewAxes, viewProjection, visible } from './math.js';
+import { viewAxes, viewProjection, visible } from "./math.js";
 
 const skyVertex = `#version 300 es
 out vec2 point;
@@ -117,7 +117,7 @@ function boxLines() {
 }
 
 const mix = (a, b, t) => a.map((n, i) => n + (b[i]-n)*t);
-const identity = new Float32Array([1,0,0, 0,1,0, 0,0,1]);
+const identity = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
 
 export class Renderer {
   constructor(canvas, atlas) {
@@ -234,8 +234,7 @@ export class Renderer {
     for (const entity of entities) {
       const { forward, right, up } = viewAxes(entity.yaw ?? 0, entity.pitch ?? 0, entity.roll ?? 0);
       const scale = entity.scale ?? 1;
-      gl.uniformMatrix3fv(voxel.rotation, false,
-        [...right.map(n => -n*scale), ...up.map(n => n*scale), ...forward.map(n => n*scale)]);
+      gl.uniformMatrix3fv(voxel.rotation, false, [...right.map((n) => -n * scale), ...up.map((n) => n * scale), ...forward.map((n) => n * scale)]);
       draw(entity.mesh.opaque, ...entity.position);
     }
     gl.uniformMatrix3fv(voxel.rotation, false, identity);

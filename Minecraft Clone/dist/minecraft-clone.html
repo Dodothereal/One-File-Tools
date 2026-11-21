@@ -88,82 +88,286 @@ kbd { font: 700 10px var(--mono); padding: 3px 5px; border: 1px solid #afc7ae55;
   .overlay { background: linear-gradient(90deg,#0b1512ed,#101c1785); }
 }
 
-.overlay[data-view=hangar] { background: linear-gradient(110deg, #0b1718fa, #0d1d21cf 68%, #142933b8); }
-.overlay[data-view=hangar] .world-tag { display: none; }
-.flight-hangar { width: min(100%, 1060px); }
-.flight-hangar .intro { max-width: none; }
-.flight-fleet { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1.5vw, 20px); }
-.flight-card {
-  display: flex; flex-direction: column; text-align: left; gap: 8px; min-width: 0;
-  padding: clamp(12px, 1.8vw, 22px); border: 1px solid #94b8b45b;
-  border-top: 3px solid var(--aircraft); background: #101e25f2; color: #f2f6f2;
+.overlay[data-view="hangar"] {
+  background: linear-gradient(110deg, #0b1718fa, #0d1d21cf 68%, #142933b8);
 }
-.flight-card:hover, .flight-card:focus-visible { background: #1c3039; border-color: var(--aircraft); }
+.overlay[data-view="hangar"] .world-tag {
+  display: none;
+}
+.flight-hangar {
+  width: min(100%, 1060px);
+}
+.flight-hangar .intro {
+  max-width: none;
+}
+.flight-fleet {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 1.5vw, 20px);
+}
+.flight-card {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 8px;
+  min-width: 0;
+  padding: clamp(12px, 1.8vw, 22px);
+  border: 1px solid #94b8b45b;
+  border-top: 3px solid var(--aircraft);
+  background: #101e25f2;
+  color: #f2f6f2;
+}
+.flight-card:hover,
+.flight-card:focus-visible {
+  background: #1c3039;
+  border-color: var(--aircraft);
+}
 .flight-card svg {
-  width: 100%; height: clamp(105px, 22vh, 205px); margin-block: 1px;
+  width: 100%;
+  height: clamp(105px, 22vh, 205px);
+  margin-block: 1px;
   background: repeating-linear-gradient(0deg, #26424d46 0 1px, transparent 1px 17px), #13242d;
   border: 1px solid #70909b42;
 }
-.flight-card-index, .flight-card-action { display: flex; justify-content: space-between; gap: 4px; font: 700 11px var(--mono); color: var(--aircraft); }
-.flight-card-index span { color: #b5c9cc; text-align: right; }
-.flight-card strong { font-size: clamp(21px, 3vw, 36px); letter-spacing: -.06em; line-height: 1; }
-.flight-card-description { font-size: 13px; color: #d0dddd; }
-.flight-card-loadout { color: #b5c9cc; font-size: 12px; margin-top: 3px; }
-.flight-card-loadout b { color: var(--aircraft); display: block; margin-bottom: 3px; }
-.flight-card-action { margin-top: auto; border-top: 1px solid #94b8b45b; padding-top: 9px; }
-.flight-hangar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 16px; font: 11px var(--mono); }
-.flight-hangar-footer button { width: 123px; }
-.flight-hangar-note, .flight-toast { padding: 10px 14px; color: #ffd5ad; background: #2e2219f2; border-left: 2px solid #f6a368; font: 12px var(--mono); }
-.flight-toast { position: absolute; left: 50%; bottom: 115px; width: max-content; max-width: 90%; transform: translateX(-50%); }
+.flight-card-index,
+.flight-card-action {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font: 700 11px var(--mono);
+  color: var(--aircraft);
+}
+.flight-card-index span {
+  color: #b5c9cc;
+  text-align: right;
+}
+.flight-card strong {
+  font-size: clamp(21px, 3vw, 36px);
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+.flight-card-description {
+  font-size: 13px;
+  color: #d0dddd;
+}
+.flight-card-loadout {
+  color: #b5c9cc;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.flight-card-loadout b {
+  color: var(--aircraft);
+  display: block;
+  margin-bottom: 3px;
+}
+.flight-card-action {
+  margin-top: auto;
+  border-top: 1px solid #94b8b45b;
+  padding-top: 9px;
+}
+.flight-hangar-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  font: 11px var(--mono);
+}
+.flight-hangar-footer button {
+  width: 123px;
+}
+.flight-hangar-note,
+.flight-toast {
+  padding: 10px 14px;
+  color: #ffd5ad;
+  background: #2e2219f2;
+  border-left: 2px solid #f6a368;
+  font: 12px var(--mono);
+}
+.flight-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 115px;
+  width: max-content;
+  max-width: 90%;
+  transform: translateX(-50%);
+}
 
-#hud[data-piloting] :is(.inventory, .crosshair, .hud-tip) { display: none; }
-.flight-hud { position: absolute; inset: 0; color: var(--flight-accent, #63f1ff); font: 11px var(--mono); font-variant-numeric: tabular-nums; }
-.flight-canopy { display: none; }
-.flight-hud[data-cockpit] .flight-canopy { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
-.flight-ident, .flight-loadout, .flight-instruments {
-  position: absolute; padding: 10px 13px; background: #0d1b23e8; border: 1px solid #6f9da48a;
+#hud[data-piloting] :is(.inventory, .crosshair, .hud-tip) {
+  display: none;
 }
-.flight-ident { top: 28px; right: clamp(16px, 4vw, 56px); min-width: 151px; border-top: 2px solid currentColor; }
-.flight-ident strong, .flight-ident small { display: block; }
-.flight-ident strong { color: #f2faf7; font: 850 22px/1.35 system-ui, sans-serif; }
-.flight-ident small { color: #d1dede; }
-.flight-instruments, .flight-controls { left: 50%; transform: translateX(-50%); }
-.flight-instruments { bottom: 61px; display: flex; gap: 15px; text-align: center; }
-.flight-instruments > div { min-width: 70px; }
-.flight-instruments span, .flight-instruments small { display: block; font-size: 9px; letter-spacing: .075em; }
-.flight-instruments strong { display: block; margin: 3px 0; line-height: 1; font-size: clamp(17px, 3vw, 27px); color: #f3fff8; }
-.flight-hud[data-boost] .flight-instruments > div:first-child strong { color: currentColor; }
-.flight-loadout { bottom: 61px; right: clamp(16px, 4vw, 56px); min-width: 160px; }
-.flight-loadout > div:not(.flight-charge) { margin: 0 0 8px; color: #e0eeeb; }
-.flight-loadout strong { color: var(--flight-accent); }
-.flight-charge { height: 4px; background: #385056; margin: 0 0 5px; }
-.flight-charge i { display: block; height: 100%; background: currentColor; transform-origin: left; }
+.flight-hud {
+  position: absolute;
+  inset: 0;
+  color: var(--flight-accent, #63f1ff);
+  font: 11px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.flight-canopy {
+  display: none;
+}
+.flight-hud[data-cockpit] .flight-canopy {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.flight-ident,
+.flight-loadout,
+.flight-instruments {
+  position: absolute;
+  padding: 10px 13px;
+  background: #0d1b23e8;
+  border: 1px solid #6f9da48a;
+}
+.flight-ident {
+  top: 28px;
+  right: clamp(16px, 4vw, 56px);
+  min-width: 151px;
+  border-top: 2px solid currentColor;
+}
+.flight-ident strong,
+.flight-ident small {
+  display: block;
+}
+.flight-ident strong {
+  color: #f2faf7;
+  font:
+    850 22px/1.35 system-ui,
+    sans-serif;
+}
+.flight-ident small {
+  color: #d1dede;
+}
+.flight-instruments,
 .flight-controls {
-  position: absolute; bottom: 15px; display: flex; white-space: nowrap; gap: 7px; align-items: center;
-  padding: 7px 10px; background: #0d1b23e8; border: 1px solid #6f9da48a; color: #e4efeb;
+  left: 50%;
+  transform: translateX(-50%);
 }
-.flight-reticle, .flight-pitch {
-  position: absolute; left: 50%; top: 50%; filter: drop-shadow(0 1px 2px #04131b);
+.flight-instruments {
+  bottom: 61px;
+  display: flex;
+  gap: 15px;
+  text-align: center;
+}
+.flight-instruments > div {
+  min-width: 70px;
+}
+.flight-instruments span,
+.flight-instruments small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.075em;
+}
+.flight-instruments strong {
+  display: block;
+  margin: 3px 0;
+  line-height: 1;
+  font-size: clamp(17px, 3vw, 27px);
+  color: #f3fff8;
+}
+.flight-hud[data-boost] .flight-instruments > div:first-child strong {
+  color: currentColor;
+}
+.flight-loadout {
+  bottom: 61px;
+  right: clamp(16px, 4vw, 56px);
+  min-width: 160px;
+}
+.flight-loadout > div:not(.flight-charge) {
+  margin: 0 0 8px;
+  color: #e0eeeb;
+}
+.flight-loadout strong {
+  color: var(--flight-accent);
+}
+.flight-charge {
+  height: 4px;
+  background: #385056;
+  margin: 0 0 5px;
+}
+.flight-charge i {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  transform-origin: left;
+}
+.flight-controls {
+  position: absolute;
+  bottom: 15px;
+  display: flex;
+  white-space: nowrap;
+  gap: 7px;
+  align-items: center;
+  padding: 7px 10px;
+  background: #0d1b23e8;
+  border: 1px solid #6f9da48a;
+  color: #e4efeb;
+}
+.flight-reticle,
+.flight-pitch {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  filter: drop-shadow(0 1px 2px #04131b);
 }
 .flight-reticle {
-  width: 39px; height: 22px; transform: translate(-50%, -50%);
-  border-inline: 2px solid currentColor; display: grid; place-items: center;
+  width: 39px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border-inline: 2px solid currentColor;
+  display: grid;
+  place-items: center;
 }
-.flight-reticle span { width: 4px; height: 4px; background: currentColor; }
-.flight-hud[data-firing] .flight-reticle { color: #fff2c5; }
-.flight-hud:not([data-cockpit]) .flight-pitch { display: none; }
-.flight-pitch { width: 150px; display: grid; gap: 37px; opacity: .66; }
+.flight-reticle span {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+}
+.flight-hud[data-firing] .flight-reticle {
+  color: #fff2c5;
+}
+.flight-hud:not([data-cockpit]) .flight-pitch {
+  display: none;
+}
+.flight-pitch {
+  width: 150px;
+  display: grid;
+  gap: 37px;
+  opacity: 0.66;
+}
 .flight-pitch span {
-  height: 1px; background: linear-gradient(90deg, currentColor 0 22%, transparent 22% 78%, currentColor 78%);
+  height: 1px;
+  background: linear-gradient(90deg, currentColor 0 22%, transparent 22% 78%, currentColor 78%);
 }
 @media (max-width: 700px) {
-  .flight-fleet { grid-template-columns: 1fr; }
-  .flight-card svg { height: 120px; }
-  .flight-controls { display: none; }
-  .flight-instruments { bottom: 18px; left: 12px; transform: none; gap: 7px; }
-  .flight-instruments > div { min-width: 43px; }
-  .flight-loadout { right: 12px; bottom: 18px; min-width: 0; }
-  .flight-ident { min-width: 0; }
+  .flight-fleet {
+    grid-template-columns: 1fr;
+  }
+  .flight-card svg {
+    height: 120px;
+  }
+  .flight-controls {
+    display: none;
+  }
+  .flight-instruments {
+    bottom: 18px;
+    left: 12px;
+    transform: none;
+    gap: 7px;
+  }
+  .flight-instruments > div {
+    min-width: 43px;
+  }
+  .flight-loadout {
+    right: 12px;
+    bottom: 18px;
+    min-width: 0;
+  }
+  .flight-ident {
+    min-width: 0;
+  }
 }
 </style>
   <title>Minecraft Clone · Overworld</title>

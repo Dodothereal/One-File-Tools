@@ -1,7 +1,7 @@
 import { blocks, faceTile } from '../world/blocks.js';
 import { COLS, TILE } from '../engine/atlas.js';
 import { presets, normalizeSettings, saveSettings } from './settings.js';
-import { FlightUI } from './flight.js';
+import { FlightUI } from "./flight.js";
 
 export const el = id => document.getElementById(id);
 

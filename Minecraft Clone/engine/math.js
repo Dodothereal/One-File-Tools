@@ -8,9 +8,9 @@ export function viewAxes(yaw, pitch, roll = 0) {
   const right = [-Math.cos(yaw), 0, Math.sin(yaw)];
   const up = cross(right, forward);
   if (!roll) return { forward, right, up };
-  const s = Math.sin(roll), r = Math.cos(roll);
-  return { forward, right: right.map((n,i) => n*r + up[i]*s),
-    up: up.map((n,i) => n*r - right[i]*s) };
+  const s = Math.sin(roll),
+    r = Math.cos(roll);
+  return { forward, right: right.map((n, i) => n * r + up[i] * s), up: up.map((n, i) => n * r - right[i] * s) };
 }
 
 export function viewProjection(camera, aspect, far) {

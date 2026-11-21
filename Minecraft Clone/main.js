@@ -7,10 +7,10 @@ import { AIR, blocks } from './world/blocks.js';
 import { dimensions } from './world/dimensions.js';
 import { World } from './world/world.js';
 import { Player, playerMesh } from './entities/player.js';
-import { cyclePerspective, resolveCamera } from './entities/camera.js';
-import { effectMeshes, jetMeshes, jets } from './entities/jet-models.js';
-import { findLaunchSite, Jet } from './entities/jet.js';
-import { JetWeapons } from './entities/jet-weapons.js';
+import { cyclePerspective, resolveCamera } from "./entities/camera.js";
+import { effectMeshes, jetMeshes, jets } from "./entities/jet-models.js";
+import { findLaunchSite, Jet } from "./entities/jet.js";
+import { JetWeapons } from "./entities/jet-weapons.js";
 import { createCommands } from './commands/builtin.js';
 import { Interface, el } from './ui/interface.js';
 import { loadSettings } from './ui/settings.js';
@@ -32,9 +32,9 @@ class Game {
     this.avatar = this.renderer.upload(playerMesh());
     this.fleet = jetMeshes(this.renderer);
     this.jetWeapons = new JetWeapons(effectMeshes(this.renderer));
-    this.commands.register('jet', '/jet <kestrel|wraith|eventide|return>', 'Launch a jet or return to the launch point', ([id], game) => {
-      if (!id) return 'Open the flight hangar with J, or launch with /jet kestrel, /jet wraith, or /jet eventide.';
-      if (id === 'return') return game.ejectJet() ? 'Returned to the launch point.' : 'You are not piloting a jet.';
+    this.commands.register("jet", "/jet <kestrel|wraith|eventide|return>", "Launch a jet or return to the launch point", ([id], game) => {
+      if (!id) return "Open the flight hangar with J, or launch with /jet kestrel, /jet wraith, or /jet eventide.";
+      if (id === "return") return game.ejectJet() ? "Returned to the launch point." : "You are not piloting a jet.";
       return game.launchJet(id) ?? `${jets[id].name} ready. Resume to take control.`;
     });
     this.enterDimension(dimensions.get('overworld'));
@@ -71,9 +71,9 @@ class Game {
   }
 
   launchJet(id) {
-    if (!Object.hasOwn(jets, id)) return 'Unknown aircraft. Choose kestrel, wraith, or eventide.';
+    if (!Object.hasOwn(jets, id)) return "Unknown aircraft. Choose kestrel, wraith, or eventide.";
     const position = findLaunchSite(this.world, this.player.vehicle?.launchSite ?? this.player.position, jets[id]);
-    if (!position) return 'Not enough clearance to launch here. Move to an open area and try again.';
+    if (!position) return "Not enough clearance to launch here. Move to an open area and try again.";
     this.player.vehicle = new Jet(id, position, this.player, this.fleet[id], this.jetWeapons, this.world);
     this.player.position = position;
   }
@@ -108,13 +108,13 @@ class Game {
       if (this.ui.view !== 'play') return;
       const { code } = event;
       if (event.ctrlKey) event.preventDefault();
-      if (!event.repeat && code === 'KeyJ') {
-        this.ui.show('hangar');
+      if (!event.repeat && code === "KeyJ") {
+        this.ui.show("hangar");
         document.exitPointerLock();
         return;
       }
-      if (!event.repeat && code === 'KeyE' && this.ejectJet()) {
-        this.ui.flight.notify('Returned to the launch point.');
+      if (!event.repeat && code === "KeyE" && this.ejectJet()) {
+        this.ui.flight.notify("Returned to the launch point.");
         return;
       }
       if (!event.ctrlKey && (code === 'Slash' || code === 'Enter')) {
@@ -149,7 +149,7 @@ class Game {
       if (this.ui.view !== 'play' || (e.button !== 0 && e.button !== 2)) return;
       e.preventDefault();
       if (this.player.vehicle) {
-        if (e.button === 0) this.keys.add('Mouse0');
+        if (e.button === 0) this.keys.add("Mouse0");
         this.player.vehicle.interact(e.button);
         return;
       }
@@ -160,7 +160,9 @@ class Game {
         this.world.set(...hit.adjacent, this.player.hotbar[this.player.slot]);
       }
     });
-    document.addEventListener('mouseup', e => { if (e.button === 0) this.keys.delete('Mouse0'); });
+    document.addEventListener("mouseup", (e) => {
+      if (e.button === 0) this.keys.delete("Mouse0");
+    });
   }
 
   camera() {
@@ -184,7 +186,7 @@ class Game {
         const jet = this.player.vehicle;
         this.player.step(dt, this.keys, this.world);
         this.jetWeapons.update(dt, this.world);
-        if (jet?.crashed) this.ui.flight.notify('Terrain impact · returned to the launch point.');
+        if (jet?.crashed) this.ui.flight.notify("Terrain impact · returned to the launch point.");
         remaining -= dt;
       }
       this.time = (this.time + elapsed/1_200_000) % 1;
@@ -192,7 +194,7 @@ class Game {
     this.stream.update(this.player.position, this.settings);
     const camera = this.started ? this.camera() : this.previewCamera;
     const selection = this.ui.view === 'play' ? this.target(camera)?.block : null;
-    const objects = [...this.player.vehicle?.renderables() ?? [], ...this.jetWeapons.renderables()];
+    const objects = [...(this.player.vehicle?.renderables() ?? []), ...this.jetWeapons.renderables()];
     const renderables = camera.showPlayer ? [...objects, {
       mesh: this.avatar, position: this.player.position, yaw: this.player.yaw,
     }] : objects;
