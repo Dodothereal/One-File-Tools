@@ -11,6 +11,7 @@
 </head>
 <body>
   <canvas id="world" aria-label="Voxel world"></canvas>
+  <pre id="performance" hidden></pre>
   <header class="wordmark"><span class="brand-cube" aria-hidden="true"></span><span>MC <b>/</b> VOL. 01</span><span class="mark-divider"></span><span>WORLD ENGINE</span></header>
   <div id="hud" hidden>
     <div class="telemetry"><div><span class="live-dot"></span><strong id="dimension-name">Overworld</strong></div><p id="location"></p><p id="statusline"></p></div>
@@ -35,10 +36,23 @@
       <h2 id="settings-title">TUNE YOUR<br>WORLD<span class="accent">.</span></h2>
       <p class="intro">Set your view. Performance and detail are yours to balance.</p>
       <label>Quality preset <select id="preset"></select></label>
+      <fieldset><legend>Quality</legend>
       <label>Render distance <output id="distance-value"></output><input type="range" id="distance" min="2" max="64"></label>
+      <label>Full-detail ring <output id="detail-value"></output><input type="range" id="detail" min="1" max="7"></label>
+      <label class="toggle">Procedural clouds <input type="checkbox" id="clouds"></label>
+      <label class="toggle">Smooth lighting / AO <input type="checkbox" id="ao"></label>
+      <label>Fog quality <select id="fog"><option value="low">Low</option><option value="high">High</option></select></label>
+      <label class="toggle">Animated water <input type="checkbox" id="water"></label>
+      <label class="toggle">Tone mapping / glow / vignette <input type="checkbox" id="post"></label>
+      </fieldset><fieldset><legend>Performance</legend>
+      <label>Resolution scale <output id="scale-value"></output><input type="range" id="scale" min=".5" max="1" step=".05"></label>
+      <label>FPS limit <select id="fpsLimit"><option value="30">30</option><option value="60">60</option><option value="120">120</option><option value="0">Unlimited</option></select></label>
+      <label>Streaming budget <output id="budget-value"></output><input type="range" id="budget" min="1" max="12" step=".5"></label>
+      <label class="toggle">Show performance overlay <input type="checkbox" id="show-overlay"></label>
+      </fieldset><fieldset><legend>Camera &amp; controls</legend>
       <label>Field of view <output id="fov-value"></output><input type="range" id="fov" min="60" max="105"></label>
       <label>Look sensitivity <output id="sensitivity-value"></output><input type="range" id="sensitivity" min=".25" max="3" step=".05"></label>
-      <label class="toggle">Procedural clouds <input type="checkbox" id="clouds"></label>
+      </fieldset>
       <button class="secondary" id="back">Back <span aria-hidden="true">←</span></button>
     </section>
     <aside class="world-tag"><span>THE FIELD GUIDE / 01</span><strong>Overworld</strong><small>PROCEDURAL TERRAIN <b>·</b> SINGLEPLAYER</small></aside>
