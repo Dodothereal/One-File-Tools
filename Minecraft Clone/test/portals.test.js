@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AIR, STONE, dimensionBlocks as B } from '../world/blocks.js';
+import { AIR, STONE, BEDROCK, dimensionBlocks as B } from '../world/blocks.js';
 import { World } from '../world/world.js';
 import { dimensions } from '../world/dimensions.js';
-import { portalTarget, lightNetherFrame, updatePortalTravel, buildPortal } from '../world/portals.js';
+import { portalTarget, portalShape, lightNetherFrame, updatePortalTravel, buildPortal } from '../world/portals.js';
 import { createCommands } from '../commands/builtin.js';
 import { registerPortalCommands } from '../commands/portals.js';
 import { Player } from '../entities/player.js';
@@ -115,4 +115,26 @@ test('portal command validates input and builds in front; dimension commands sup
   }
   game.player.position[1] = 95;
   assert.match(buildPortal(game, 'city'), /Stand between/);
+});
+
+test('portal commands only edit the gate footprint and reject unbreakable blocks atomically', () => {
+  for (const kind of ['nether', 'end', 'city']) for (const yaw of [0, Math.PI / 2]) {
+    const world = emptyWorld(), player = new Player([0, 10, 0]);
+    player.yaw = yaw;
+    const alongX = yaw !== 0;
+    const shape = portalShape(kind, alongX ? 5 : -1, 9, alongX ? -1 : 5, alongX ? 'z' : 'x', false);
+    const footprint = new Set(shape.map(([x, y, z]) => `${x},${y},${z}`));
+    for (let x = -4; x <= 10; x++) for (let y = 8; y <= 16; y++) for (let z = -4; z <= 10; z++) {
+      world.set(x, y, z, y === 8 ? BEDROCK : STONE);
+    }
+    assert.match(buildPortal({ world, player }, kind), /Built/);
+    for (let x = -4; x <= 10; x++) for (let y = 8; y <= 16; y++) for (let z = -4; z <= 10; z++) {
+      if (!footprint.has(`${x},${y},${z}`)) assert.equal(world.get(x, y, z), y === 8 ? BEDROCK : STONE);
+    }
+    const blocked = emptyWorld();
+    blocked.set(...shape[0].slice(0, 3), BEDROCK);
+    const before = structuredClone(blocked.edits);
+    assert.match(buildPortal({ world: blocked, player }, kind), /unbreakable/);
+    assert.deepEqual(blocked.edits, before);
+  }
 });

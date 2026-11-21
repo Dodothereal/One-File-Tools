@@ -1,4 +1,4 @@
-import { AIR, dimensionBlocks as B } from './blocks.js';
+import { AIR, blocks, dimensionBlocks as B } from './blocks.js';
 
 const portalIds = { nether: B.nether_portal, end: B.end_portal, city: B.city_portal };
 
@@ -7,14 +7,14 @@ export function portalTarget(block, current) {
   return target ? current === target ? 'overworld' : target : null;
 }
 
-export function portalShape(kind, x, y, z, axis = 'x') {
+export function portalShape(kind, x, y, z, axis = 'x', approach = true) {
   if (!portalIds[kind]) return [];
   const result = [];
   const put = (u, v, depth, id) => result.push([x + (axis === 'x' ? u : depth), y + v, z + (axis === 'x' ? depth : u), id]);
   const width = kind === 'nether' ? 4 : 5;
   const tall = kind === 'end' ? 1 : kind === 'nether' ? 5 : 6;
   // A clear, solid approach on either side makes naturally generated gates usable.
-  for (let u = -2; u <= width + 1; u++) for (let d = -2; d <= (kind === 'end' ? 6 : 2); d++) {
+  if (approach) for (let u = -2; u <= width + 1; u++) for (let d = -2; d <= (kind === 'end' ? 6 : 2); d++) {
     put(u, 0, d, kind === 'nether' ? B.obsidian : kind === 'end' ? B.end_portal_frame : B.metal_panel);
     for (let v = 1; v <= Math.max(4, tall); v++) put(u, v, d, AIR);
   }
@@ -180,6 +180,10 @@ export function buildPortal(game, kind) {
   const z = Math.floor(player.position[2]) + fz * 5 - (alongX ? 1 : 0);
   const y = Math.floor(player.position[1]) - 1;
   if (y < 1 || y > 88) return 'Stand between y=2 and y=89 to build a portal.';
-  for (const [wx, wy, wz, id] of portalShape(kind, x, y, z, alongX ? 'z' : 'x')) world.set(wx, wy, wz, id);
+  const shape = portalShape(kind, x, y, z, alongX ? 'z' : 'x', false);
+  if (shape.some(([wx, wy, wz]) => blocks[world.get(wx, wy, wz)].unbreakable)) {
+    return 'Cannot build a portal over unbreakable blocks.';
+  }
+  for (const [wx, wy, wz, id] of shape) world.set(wx, wy, wz, id);
   return `Built ${kind} portal. Step inside to travel.`;
 }
