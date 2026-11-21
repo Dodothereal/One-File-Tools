@@ -110,9 +110,9 @@ export function withPortals(generator, dimension) {
 }
 
 export function lightNetherFrame(world, placed) {
-  if (world.get(...placed) !== B.obsidian) return false;
+  const changed = world.get(...placed);
+  if (changed !== B.obsidian && changed !== AIR) return false;
   for (const axis of ['x', 'z']) for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
-    if (a === 0 && b === 0) continue;
     const point = (u, y) => axis === 'x' ? [u, y, placed[2]] : [placed[0], y, u];
     const startU = placed[axis === 'x' ? 0 : 2] + a, startY = placed[1] + b;
     const pending = [[startU, startY]], visited = new Map();

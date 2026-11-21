@@ -124,6 +124,7 @@ class Game {
       if (e.button === 0 && !blocks[broken].unbreakable) {
         this.world.set(...hit.block, AIR);
         if (broken === B.obsidian) removeNetherPortal(this.world, hit.block);
+        lightNetherFrame(this.world, hit.block);
       }
       if (e.button === 2 && hit.adjacent && !this.player.intersects(...hit.adjacent)) {
         this.world.set(...hit.adjacent, this.player.hotbar[this.player.slot]);

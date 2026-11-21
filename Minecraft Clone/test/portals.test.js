@@ -49,6 +49,23 @@ test('portal mappings toggle each destination back to Overworld', () => {
   assert.equal(portalTarget(STONE, 'overworld'), null);
 });
 
+test('removing the last interior scaffold lights completed frames in either axis and at maximum size', () => {
+  for (const axis of ['x', 'z']) for (const [width, height] of [[2, 3], [21, 21]]) {
+    const world = emptyWorld(), point = frame(world, width, height, axis);
+    const scaffold = point(Math.ceil(width / 2), Math.ceil(height / 2));
+    world.set(...scaffold, STONE);
+    assert.equal(lightNetherFrame(world, point(0, 0)), false);
+    assert.equal(lightNetherFrame(world, scaffold), false);
+    world.set(...scaffold, AIR);
+    assert(lightNetherFrame(world, scaffold));
+    assert.equal(world.get(...point(1, 1)), B.nether_portal);
+    assert.equal(world.get(...point(width, height)), B.nether_portal);
+  }
+  const world = emptyWorld(), point = frame(world, 2, 3, 'x', true);
+  assert.equal(lightNetherFrame(world, point(1, 1)), false);
+  assert.equal(world.get(...point(1, 1)), AIR);
+});
+
 test('breaking frame sides, tops, bases and corners extinguishes only connected Nether portals', () => {
   for (const axis of ['x', 'z']) for (const [u, y] of [[0, 2], [3, 2], [1, 4], [1, 0], [0, 0], [3, 4]]) {
     const world = emptyWorld(), point = frame(world, 2, 3, axis);
