@@ -100,6 +100,17 @@ test('player lands, jumps, flies in creative, and respects solid walls', () => {
   assert(!player.flying);
 });
 
+test('short frame remainders keep feet on the exact Overworld sand surface', () => {
+  const world = new World(dimensions.get('overworld'), 2391);
+  const player = new Player([10.5, 32, .5]);
+  player.setMode('survival');
+  for (const dt of [1/120, .0005, 1/120, .0005]) {
+    player.step(dt, new Set(), world);
+    assert.equal(player.position[1], 32);
+    assert(player.grounded);
+  }
+});
+
 test('perspective resolution stops behind walls and delegates cockpit to vehicles', () => {
   const world = worldWith(() => {});
   world.set(0, 2, -1, STONE);

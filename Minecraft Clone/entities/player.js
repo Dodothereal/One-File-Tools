@@ -105,7 +105,10 @@ export class Player {
     pos[axis] += movement;
     let bound = pos[axis];
     let collided = false;
-    const extent = pos.map((n, i) => [Math.floor(n - pad[i] + .00001), Math.floor(n + height[i] - .00001)]);
+    const extent = pos.map((n, i) => [
+      Math.floor(n - pad[i] + (i === axis && direction < 0 ? 0 : .00001)),
+      Math.floor(n + height[i] - .00001),
+    ]);
     for (let x = extent[0][0]; x <= extent[0][1]; x++) for (let y = extent[1][0]; y <= extent[1][1]; y++) {
       for (let z = extent[2][0]; z <= extent[2][1]; z++) {
         const id = world.get(x, y, z);
