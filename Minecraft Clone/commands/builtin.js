@@ -1,6 +1,7 @@
 import { CommandRegistry } from './registry.js';
-import { blocks } from '../world/blocks.js';
+import { AIR, blocks, dimensionBlocks } from '../world/blocks.js';
 import { dimensions } from '../world/dimensions.js';
+import { lightNetherFrame } from '../world/portals.js';
 import { HEIGHT } from '../world/world.js';
 import { presets, settingRules } from '../ui/settings.js';
 
@@ -71,7 +72,13 @@ export function createCommands(registry = new CommandRegistry()) {
       if (low[1] < 0 || high[1] >= HEIGHT) invalid(`Y must be from 0 to ${HEIGHT-1}.`);
       if (high.reduce((volume,n,i) => volume*(n-low[i]+1),1) > 32768) invalid('Fill exceeds 32768 blocks.');
       let changed = 0;
-      for (let y=low[1];y<=high[1];y++) for (let z=low[2];z<=high[2];z++) for (let x=low[0];x<=high[0];x++) changed += Number(game.world.set(x,y,z,block.id));
+      const frameEdits = block.id === AIR || block.id === dimensionBlocks.obsidian ? [] : null;
+      for (let y=low[1];y<=high[1];y++) for (let z=low[2];z<=high[2];z++) for (let x=low[0];x<=high[0];x++) {
+        if (!game.world.set(x,y,z,block.id)) continue;
+        changed++;
+        frameEdits?.push([x,y,z]);
+      }
+      for (const position of frameEdits ?? []) lightNetherFrame(game.world, position);
       return `Changed ${changed} blocks.`;
     });
   }

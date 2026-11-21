@@ -31,6 +31,18 @@ test('obsidian frames light in both orientations including maximum size', () => 
   }
 });
 
+test('setblock and fill light completed Nether frames after applying their edits', () => {
+  for (const command of ['/setblock -9 3 -1 obsidian', '/fill -9 3 -1 -8 3 -1 obsidian']) {
+    const world = emptyWorld();
+    const point = frame(world, 2, 3, 'x', true);
+    if (command.startsWith('/fill')) world.set(...point(2, 0), AIR);
+    assert.equal(world.get(...point(1, 1)), AIR);
+    createCommands().execute(command, { world, player: { position: [0, 0, 0] } });
+    assert.equal(world.get(...point(1, 1)), B.nether_portal, command);
+    assert.equal(world.get(...point(2, 3)), B.nether_portal, command);
+  }
+});
+
 test('open, obstructed, undersized and oversized frames do not light', () => {
   for (const [width, height, missing, obstructed] of [[2, 3, true, false], [1, 3], [2, 2], [22, 3], [2, 22], [2, 3, false, true]]) {
     const world = emptyWorld(), point = frame(world, width, height, 'x', missing);
