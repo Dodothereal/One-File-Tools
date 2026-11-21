@@ -25,7 +25,7 @@ requests are needed to play.
 | 1–9 or scroll | Pick a hotbar slot |
 | F5 | First person → third person close → third person far → cockpit hook |
 | / or Enter | Open the world console; type `/help` for commands |
-| Escape | Pause, or close the console and resume |
+| Escape | Pause, or close the console and return to the pause menu |
 
 Graphics settings persist locally where browser storage is available. World edits
 are kept in memory for the current page session, including across dimension changes.

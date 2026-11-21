@@ -39,7 +39,8 @@ export class Interface {
     el('command').addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        game.lock();
+        this.show('menu');
+        el('play').focus();
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
         this.historyIndex = Math.max(0, Math.min(this.history.length,
