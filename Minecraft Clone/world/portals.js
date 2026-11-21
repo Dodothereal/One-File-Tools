@@ -205,6 +205,18 @@ export function buildPortal(game, kind) {
   if (shape.some(([wx, wy, wz]) => blocks[world.get(wx, wy, wz)].unbreakable)) {
     return 'Cannot build a portal over unbreakable blocks.';
   }
+  const clearance = shape.filter(([, wy]) => wy > y).map(([wx, wy, wz]) => [wx, wy, wz]);
+  for (const [wx, wy, wz, id] of shape) {
+    if (id !== portalIds[kind]) continue;
+    if (kind === 'end') {
+      clearance.push([wx, wy + 1, wz], [wx, wy + 2, wz]);
+    } else if (wy <= y + 2) {
+      clearance.push([wx + fx, wy, wz + fz], [wx - fx, wy, wz - fz]);
+    }
+  }
+  if (clearance.some(point => world.get(...point) !== AIR)) {
+    return 'Cannot build a portal here: opening or approach is obstructed. Find open ground or clear it first.';
+  }
   for (const [wx, wy, wz, id] of shape) world.set(wx, wy, wz, id);
   return `Built ${kind} portal. Step inside to travel.`;
 }

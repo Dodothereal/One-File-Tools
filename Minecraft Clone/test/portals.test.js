@@ -159,6 +159,7 @@ test('portal command validates input and builds in front; dimension commands sup
   assert.match(registry.execute('/portal', game), /Usage/);
   assert.match(registry.execute('/portal unknown', game), /Usage/);
   for (const kind of ['nether', 'end', 'city']) {
+    game.world = emptyWorld();
     assert.match(registry.execute(`/portal ${kind}`, game), /Built/);
     assert.match(registry.execute(`/dimension ${kind}`, game), /Entered/);
     assert.equal(game.dimension.id, kind);
@@ -176,12 +177,11 @@ test('portal commands only edit the gate footprint and reject unbreakable blocks
     const alongX = yaw !== 0;
     const shape = portalShape(kind, alongX ? 5 : -1, 9, alongX ? -1 : 5, alongX ? 'z' : 'x', false);
     const footprint = new Set(shape.map(([x, y, z]) => `${x},${y},${z}`));
-    for (let x = -4; x <= 10; x++) for (let y = 8; y <= 16; y++) for (let z = -4; z <= 10; z++) {
-      world.set(x, y, z, y === 8 ? BEDROCK : STONE);
-    }
+    for (let x = -4; x <= 10; x++) for (let z = -4; z <= 10; z++) world.set(x, 8, z, BEDROCK);
+    world.set(-4, 12, -4, STONE);
     assert.match(buildPortal({ world, player }, kind), /Built/);
     for (let x = -4; x <= 10; x++) for (let y = 8; y <= 16; y++) for (let z = -4; z <= 10; z++) {
-      if (!footprint.has(`${x},${y},${z}`)) assert.equal(world.get(x, y, z), y === 8 ? BEDROCK : STONE);
+      if (!footprint.has(`${x},${y},${z}`)) assert.equal(world.get(x, y, z), y === 8 ? BEDROCK : x === -4 && y === 12 && z === -4 ? STONE : AIR);
     }
     const blocked = emptyWorld();
     blocked.set(...shape[0].slice(0, 3), BEDROCK);
@@ -189,4 +189,33 @@ test('portal commands only edit the gate footprint and reject unbreakable blocks
     assert.match(buildPortal({ world: blocked, player }, kind), /unbreakable/);
     assert.deepEqual(blocked.edits, before);
   }
+});
+
+test('portal commands refuse blocked openings, headroom and approaches without modifying terrain or edits', () => {
+  for (const kind of ['nether', 'end', 'city']) for (const yaw of [0, Math.PI / 2]) {
+    const alongX = yaw !== 0;
+    const shape = portalShape(kind, alongX ? 5 : -1, 9, alongX ? -1 : 5, alongX ? 'z' : 'x', false);
+    const portal = shape.find(([, , , id]) => id === B[`${kind}_portal`]);
+    const [x, y, z] = portal;
+    const obstacles = kind === 'end' ? [[x, y + 1, z], [x, y + 2, z]] :
+      [[x, y, z], [x + (alongX ? 1 : 0), y, z + (alongX ? 0 : 1)], [x - (alongX ? 1 : 0), y + 1, z - (alongX ? 0 : 1)]];
+    for (const position of obstacles) for (const id of [STONE, BEDROCK]) {
+      const world = emptyWorld(), player = new Player([0, 10, 0]);
+      player.yaw = yaw;
+      world.set(...position, id);
+      const before = structuredClone(world.edits);
+      assert.match(buildPortal({ world, player }, kind), /obstructed|unbreakable/);
+      assert.deepEqual(world.edits, before);
+      assert.equal(world.get(...position), id);
+    }
+  }
+});
+
+test('east-facing End portal at shipped Overworld spawn refuses burial under natural terrain', () => {
+  const world = new World(dimensions.get('overworld'), 2391);
+  const player = new Player(world.spawn(18, 0));
+  player.yaw = Math.PI / 2;
+  const before = structuredClone(world.edits);
+  assert.match(buildPortal({ world, player }, 'end'), /obstructed/);
+  assert.deepEqual(world.edits, before);
 });
