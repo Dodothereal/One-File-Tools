@@ -174,3 +174,19 @@ test("the singularity opens a visible field before carving and resets across dim
   assert.equal(weapons.remaining(jet), 0);
   assert.deepEqual(weapons.renderables(), []);
 });
+
+test("projectiles inherit the jet's speed so a boosting Eventide stays behind its Singularity", () => {
+  const { world, jet, player, weapons } = hangar("eventide");
+  const keys = new Set(["Space"]);
+  steps(240, (dt) => player.step(dt, keys, world));
+  assert(jet.speed > jets.eventide.speed[1]);
+  weapons.fire(2, jet);
+  steps(100, (dt) => {
+    player.step(dt, keys, world);
+    weapons.update(dt, world);
+  });
+  const [shot] = weapons.shots;
+  const { forward } = jet.axes();
+  const lead = shot.position.reduce((sum, n, i) => sum + (n - jet.position[i]) * forward[i], 0);
+  assert(lead > jets.eventide.length + 20);
+});

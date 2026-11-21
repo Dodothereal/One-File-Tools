@@ -206,7 +206,7 @@ class Game {
       updatePortalTravel(this, Math.min(.08, elapsed / 1000), dimensions);
     }
     this.stream.update(this.player.position, this.settings);
-    const camera = this.started ? this.camera() : this.previewCamera;
+    const camera = this.started || this.player.vehicle ? this.camera() : this.previewCamera;
     const selection = this.ui.view === 'play' ? this.target(camera)?.block : null;
     const objects = [...(this.player.vehicle?.renderables() ?? []), ...this.jetWeapons.renderables()];
     const renderables = camera.showPlayer ? [...objects, {

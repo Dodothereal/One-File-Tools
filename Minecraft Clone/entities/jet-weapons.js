@@ -57,6 +57,7 @@ export class JetWeapons {
         yaw,
         pitch: jet.pitch,
         forward: viewAxes(yaw, jet.pitch).forward,
+        speed: payloads[type].speed + jet.speed,
         position: offset(jet.position, jet.axes(), lateral, -0.18, jet.spec.length + 0.48),
         life: payloads[type].life
       });
@@ -78,8 +79,8 @@ export class JetWeapons {
     this.time += dt;
     const solid = (x, y, z) => blocks[world.get(x, y, z)].solid;
     for (const shot of this.shots) {
-      const { speed, radius } = payloads[shot.type];
-      const distance = Math.min(dt, shot.life) * speed;
+      const { radius } = payloads[shot.type];
+      const distance = Math.min(dt, shot.life) * shot.speed;
       const hit = raycast(shot.position, shot.forward, distance, solid);
       shot.position = shot.position.map((n, i) => n + shot.forward[i] * (hit?.distance ?? distance));
       shot.life = hit ? 0 : shot.life - dt;
