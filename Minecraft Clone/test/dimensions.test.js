@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AIR, BEDROCK, blocks, dimensionBlocks as B } from '../world/blocks.js';
+import { AIR, BEDROCK, STONE, blocks, dimensionBlocks as B } from '../world/blocks.js';
 import { dimensions } from '../world/dimensions.js';
 import { World, HEIGHT } from '../world/world.js';
 import { CITY_GRID, STREET_Y } from '../world/city.js';
@@ -80,6 +80,20 @@ test('City grid has roads, sidewalks, a bedrock foundation and tall hollow build
   assert.equal(world.get(x, STREET_Y + 1, z + 15), AIR, 'walk-in doorway');
   assert.equal(world.get(x, STREET_Y + 2, z + 20), AIR, 'hollow ground floor');
   assert(blocks[world.get(x, STREET_Y + 4, z + 20)].solid, 'floor slab');
+});
+
+test('Nether, End and City arrivals relocate to nearby clearance after saved edits', () => {
+  for (const id of ['nether', 'end', 'city']) {
+    const world = worldOf(id);
+    const [x, y, z] = world.spawn(...world.dimension.spawn).map(Math.floor);
+    for (let dy = 0; dy < 3; dy++) world.set(x, y + dy, z, STONE);
+    const arrival = new World(world.dimension, world.seed, world.edits);
+    const [sx, sy, sz] = arrival.spawn(...arrival.dimension.spawn).map(Math.floor);
+    assert.equal(Math.abs(sx - x) + Math.abs(sy - y) + Math.abs(sz - z), 1, id);
+    assert.equal(arrival.get(sx, sy, sz), AIR, id);
+    assert.equal(arrival.get(sx, sy + 1, sz), AIR, id);
+    assert(blocks[arrival.get(sx, sy - 1, sz)].solid, id);
+  }
 });
 
 test('City LOD surfaces match generated roofs, streets, parks and equipment', () => {
