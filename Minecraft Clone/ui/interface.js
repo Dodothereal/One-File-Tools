@@ -123,6 +123,11 @@ export class Interface {
     const [x,y,z] = player.position.map(Math.floor);
     const biome = world.generator.surface?.(x,z).biome;
     el('dimension-name').textContent = biome ? `${world.dimension.name} · ${biome}` : world.dimension.name;
+    if (world.dimension.name !== this.dimensionName) {
+      this.dimensionName = world.dimension.name;
+      el('world-name').textContent = this.dimensionName;
+      document.title = `Minecraft Clone · ${this.dimensionName}`;
+    }
     el('location').textContent = `XYZ  ${x} / ${y} / ${z}`;
     el('statusline').textContent = `${camera.mode?.name ?? 'Preview'}  /  ${player.flying ? 'Flying' : player.mode}  /  ${fps} FPS · ${drawn} tiles`;
     el('performance').hidden = !this.game.settings.overlay;
