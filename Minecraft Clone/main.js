@@ -4,7 +4,7 @@ import { ChunkStream } from './engine/stream.js';
 import { frameTime } from './engine/frame-timing.js';
 import { raycast } from './engine/raycast.js';
 import { viewAxes } from './engine/math.js';
-import { AIR, blocks } from './world/blocks.js';
+import { AIR, WATER, blocks } from './world/blocks.js';
 import { dimensions } from './world/dimensions.js';
 import { World } from './world/world.js';
 import { Player, playerMesh } from './entities/player.js';
@@ -215,7 +215,8 @@ class Game {
       mesh: this.avatar, position: this.player.position, yaw: this.player.yaw,
     }] : objects;
     const drawn = this.renderer.render(camera, this.stream.active.values(), this.settings,
-      this.time, this.world.dimension, selection, renderables);
+      this.time, this.world.dimension, selection, renderables,
+      this.world.get(...camera.position.map(Math.floor)) === WATER);
     this.periodStart ??= at;
     this.frameCount = (this.frameCount ?? 0) + 1;
     if (at - this.periodStart > 500) {
