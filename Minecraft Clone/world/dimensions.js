@@ -2,11 +2,14 @@ import { createOverworld } from './overworld.js';
 import { createNether } from './nether.js';
 import { createEnd } from './end.js';
 import { createCity } from './city.js';
+import { withPortals } from './portals.js';
 
 export const dimensions = new Map();
 
 export function registerDimension(id, definition) {
-  dimensions.set(id, { id, ...definition });
+  dimensions.set(id, { id, ...definition,
+    ...(definition.create ? { create: seed => withPortals(definition.create(seed), id) } : {}),
+  });
 }
 
 registerDimension('overworld', { name: 'Overworld', create: createOverworld, sky: [0.53, 0.73, 0.89] });

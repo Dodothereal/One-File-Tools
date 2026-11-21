@@ -9,6 +9,8 @@ import { World } from './world/world.js';
 import { Player, playerMesh } from './entities/player.js';
 import { perspectives, resolveCamera } from './entities/camera.js';
 import { createCommands } from './commands/builtin.js';
+import { registerPortalCommands } from './commands/portals.js';
+import { lightNetherFrame, updatePortalTravel } from './world/portals.js';
 import { Interface, el } from './ui/interface.js';
 import { loadSettings } from './ui/settings.js';
 
@@ -18,7 +20,7 @@ class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.settings = loadSettings();
-    this.commands = createCommands();
+    this.commands = registerPortalCommands(createCommands());
     this.keys = new Set();
     this.savedEdits = new Map();
     this.perspective = 0;
@@ -37,6 +39,7 @@ class Game {
     this.stream?.dispose();
     if (!this.savedEdits.has(dimension.id)) this.savedEdits.set(dimension.id, new Map());
     this.world = new World(dimension, SEED, this.savedEdits.get(dimension.id));
+    this.portalState = { cooldown: 3, contact: null, elapsed: 0 };
     const [x,z] = dimension.spawn ?? (dimension.id === 'overworld' ? [18, 0] : [0, 0]);
     const position = this.world.spawn(x, z);
     if (!this.player) {
@@ -113,6 +116,7 @@ class Game {
       if (e.button === 0 && !blocks[this.world.get(...hit.block)].unbreakable) this.world.set(...hit.block, AIR);
       if (e.button === 2 && hit.adjacent && !this.player.intersects(...hit.adjacent)) {
         this.world.set(...hit.adjacent, this.player.hotbar[this.player.slot]);
+        lightNetherFrame(this.world, hit.adjacent);
       }
     });
   }
@@ -139,6 +143,7 @@ class Game {
         remaining -= dt;
       }
       this.time = (this.time + elapsed/1_200_000) % 1;
+      updatePortalTravel(this, Math.min(.08, elapsed / 1000), dimensions);
     }
     this.stream.update(this.player.position, this.settings);
     const camera = this.started ? this.camera() : this.previewCamera;

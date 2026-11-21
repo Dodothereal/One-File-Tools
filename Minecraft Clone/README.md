@@ -33,8 +33,11 @@ Creative is the default; survival mode currently changes movement and reach, not
 health, hunger, or crafting. Use `/dimension nether` to visit the Nether's lava
 seas, forests, caves and bridges. `/dimension end` visits floating islands,
 obsidian pillars and outer settlements; `/dimension city` visits an infinite
-street grid with towers, parks and plazas. Portal blocks are decorative until
-travel is implemented.
+street grid with towers, parks and plazas. Three gates near Overworld spawn lead
+to those dimensions, with return gates near each arrival. Stand inside a gate
+for one second to travel (End portals are instant); arrival has a three-second
+cooldown. `/portal <nether|end|city>` builds a gate in front of you. Completing an
+obsidian rectangle with a 2×3 through 21×21 interior automatically lights it.
 Cockpit view falls back to first person until a vehicle supplies a camera.
 
 ## ARCHITECTURE
