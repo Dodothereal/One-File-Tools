@@ -100,6 +100,25 @@ test('player lands, jumps, flies in creative, and respects solid walls', () => {
   assert(!player.flying);
 });
 
+test('R sprints without browser modifiers and releasing it restores walking speed', () => {
+  const world = worldWith(() => {});
+  const player = new Player([0, 20, 0]);
+  const move = keys => {
+    const before = player.position[2];
+    player.step(.01, new Set(keys), world);
+    return player.position[2] - before;
+  };
+  assert(Math.abs(move(['KeyW', 'KeyR']) - .072) < 1e-10);
+  assert(Math.abs(move(['KeyW']) - .046) < 1e-10);
+  assert.equal(move([]), 0);
+  assert.equal(move(['KeyR']), 0);
+  assert(Math.abs(move(['KeyW', 'ControlLeft']) - .046) < 1e-10);
+  assert(Math.abs(move(['KeyW', 'ShiftLeft']) - .021) < 1e-10);
+  player.flying = true;
+  assert(Math.abs(move(['KeyW', 'KeyR']) - .22) < 1e-10);
+  assert(Math.abs(move(['KeyW']) - .1) < 1e-10);
+});
+
 test('short frame remainders keep feet on the exact Overworld sand surface', () => {
   const world = new World(dimensions.get('overworld'), 2391);
   const player = new Player([10.5, 32, .5]);

@@ -19,7 +19,7 @@ requests are needed to play.
 | Control | Action |
 | --- | --- |
 | WASD / Mouse | Move / look |
-| Space / Ctrl / Shift | Jump or swim up / sprint / walk slowly |
+| Space / R / Shift | Jump or swim up / hold to sprint / walk slowly |
 | Space twice | Toggle creative flight; Space ascends, Shift descends |
 | Left / right mouse | Break / place the selected block |
 | 1–9 or scroll | Pick a hotbar slot |

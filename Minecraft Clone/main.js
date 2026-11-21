@@ -110,7 +110,6 @@ class Game {
     window.addEventListener('keydown', event => {
       if (this.ui.view !== 'play') return;
       const { code } = event;
-      if (event.ctrlKey) event.preventDefault();
       if (!event.repeat && code === "KeyJ") {
         this.ui.show("hangar");
         document.exitPointerLock();
