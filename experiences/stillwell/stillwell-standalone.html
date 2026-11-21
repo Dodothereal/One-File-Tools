@@ -108,6 +108,7 @@
       @media(max-width:720px){.final-face{height:88svh;top:44%}.final-caption{bottom:12%}.final-caption h2{font-size:clamp(54px,15vw,100px)}}
       @media(max-height:480px){.header-inner{height:46px}.brand{font-size:25px}.brand-mark{width:23px;height:23px}.nav a:not(.nav-cta){display:none}.chapter-marker{top:58px;font-size:7px}.controls{left:10px;bottom:8px;padding:2px}.sound-toggle,.motion-toggle{padding:6px;font-size:8px}.final-kicker{top:66px;font-size:7px;letter-spacing:2px}.final-code{top:65px;font-size:7px;letter-spacing:1px}.final-face{height:82svh;top:41%}.final-caption{bottom:57px}.final-caption h2{font-size:38px;margin:5px 0 8px;letter-spacing:-1px}.final-caption>p{font-size:8px;letter-spacing:1px}.end-card{padding-top:65px;padding-bottom:90px;scroll-margin-top:55px}.end-card>p{margin:12px auto 14px}.end-card .button{scroll-margin-block:65px 65px}.end-foot{margin-top:45px}}
       .reduced-motion .final-portrait{transform:none}
+      .chapter-marker{top:calc(var(--header-bottom,117px) + 12px)}
 
 
       .entity-defs{position:absolute;overflow:hidden}.forest-eyes{width:28px;height:65px;top:40%;left:59%}.presence{width:58px;height:46%;left:75%;top:11%;background:none;border-radius:0;filter:none}.presence:before{content:none}.door-eyes{width:35px;height:110px;top:102px;right:4px}
@@ -287,10 +288,12 @@
           for(const chapter of chapters) if(chapter.getBoundingClientRect().top<view*.54) next=Number(chapter.dataset.chapter);
           const hallProgress=clamp(-hall.getBoundingClientRect().top/Math.max(hall.offsetHeight-view,1));
           const finalRect=finale.getBoundingClientRect();
+          const headerBottom=$('.site-header').getBoundingClientRect().bottom;
           const finalProgress=clamp(-finalRect.top/Math.max(finale.offsetHeight-view,1));
           setPhase(resetting?0:next);
           const decay=resetting?0:clamp((phase+clamp(y/total)) / 5.6);
           writeStyle(body,'--decay',decay.toFixed(3));
+          writeStyle(body,'--header-bottom',`${headerBottom}px`);
           writeStyle(bar,'transform',`scaleX(${clamp(y/Math.max(total,1)).toFixed(3)})`);
           writeStyle(hall,'--hall',hallProgress.toFixed(3));
           writeStyle(finale,'--final-copy-opacity',finalRect.bottom<view?'0':'1');
