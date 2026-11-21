@@ -109,6 +109,24 @@ test('portal contact waits one second, resets on exit and cools down after trave
   assert.equal(entered.length, 2);
 });
 
+test('mining approach obsidian outside the portal plane leaves intact gates lit', () => {
+  for (const axis of ['x', 'z']) for (const side of [-1, 1]) for (const [u, y] of [[1, 0], [1, 1], [0, 0], [2, 2]]) {
+    const world = emptyWorld(), point = frame(world, 2, 3, axis);
+    assert(lightNetherFrame(world, point(0, 0)));
+    const approach = point(u, y);
+    approach[axis === 'x' ? 2 : 0] += side;
+    world.set(...approach, B.obsidian);
+    world.set(...approach, AIR);
+    removeNetherPortal(world, approach);
+    for (let a = 1; a <= 2; a++) for (let b = 1; b <= 3; b++) assert.equal(world.get(...point(a, b)), B.nether_portal);
+  }
+  const world = new World(dimensions.get('overworld'), 2391);
+  const y = world.generator.surface(7, -7).y;
+  world.set(7, y - 4, -8, AIR);
+  removeNetherPortal(world, [7, y - 4, -8]);
+  assert.equal(world.get(7, y - 3, -7), B.nether_portal);
+});
+
 test('Overworld has all three deterministic portal types within fifteen blocks of spawn', () => {
   const first = new World(dimensions.get('overworld'), 2391);
   const second = new World(dimensions.get('overworld'), 2391);

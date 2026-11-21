@@ -145,15 +145,23 @@ export function lightNetherFrame(world, placed) {
 }
 
 export function removeNetherPortal(world, broken) {
-  const pending = [];
-  for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
-    pending.push([broken[0] + x, broken[1] + y, broken[2] + z]);
-  }
-  while (pending.length) {
-    const [x, y, z] = pending.pop();
-    if (world.get(x, y, z) !== B.nether_portal) continue;
-    world.set(x, y, z, AIR);
-    pending.push([x + 1, y, z], [x - 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]);
+  for (const axis of ['x', 'z']) {
+    const point = (u, y) => axis === 'x' ? [u, y, broken[2]] : [broken[0], y, u];
+    const origin = broken[axis === 'x' ? 0 : 2];
+    const pending = [];
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+      const u = origin + a, y = broken[1] + b;
+      if (world.get(...point(u, y)) !== B.nether_portal) continue;
+      if (world.get(...point(u - 1, y)) === B.nether_portal || world.get(...point(u + 1, y)) === B.nether_portal) {
+        pending.push([u, y]);
+      }
+    }
+    while (pending.length) {
+      const [u, y] = pending.pop();
+      if (world.get(...point(u, y)) !== B.nether_portal) continue;
+      world.set(...point(u, y), AIR);
+      pending.push([u + 1, y], [u - 1, y], [u, y + 1], [u, y - 1]);
+    }
   }
 }
 
