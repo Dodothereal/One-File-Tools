@@ -128,6 +128,12 @@
         let lastBeat = 0;
         let heartTimer = null;
         let whisperTimer = null;
+        let whisperPhase = null;
+        let whisperVersion = 0;
+        let hiddenWhisper = false;
+        let suspendTimer = null;
+        let soundVersion = 0;
+        const oneShots = new Set();
         let sceneStep = -1;
         const names = ['ALL IS WELL','MAKE YOURSELF AT HOME','SOMETHING FEELS DIFFERENT','UNEXPECTED PRESENCE','NO SIGNAL','YOU ARE HOME'];
         const announcements = ['Welcome to Stillwell.','The feeling: small details begin to change.','The practice: a presence appears in the room.','Your place: the site is no longer what it seemed.','You have entered the lower corridor.','The presence reveals itself. You can return to calm at any time.'];
@@ -144,6 +150,8 @@
           if (phase===next) return;
           const previous=phase;
           phase=next;
+          stopOneShots(next);
+          if(whisperPhase!==null && next<whisperPhase)cancelWhisper();
           body.dataset.phase=String(phase);
           $('#chapter-marker').textContent=names[phase];
           $('#phase-announcement').textContent=announcements[phase];
@@ -189,6 +197,27 @@
         document.querySelectorAll('img').forEach(image=>image.addEventListener('load',requestRender));
         render();
         function ramp(node,value,duration=1.5){if(audio){node.cancelScheduledValues(audio.ctx.currentTime);node.setTargetAtTime(value,audio.ctx.currentTime,duration);}}
+        function hold(node,time){if(node.cancelAndHoldAtTime)node.cancelAndHoldAtTime(time);else{const value=node.value;node.cancelScheduledValues(time);node.setValueAtTime(value,time);}}
+        function fadeAndSuspend(){
+          const version=++soundVersion;
+          clearTimeout(suspendTimer);
+          const gain=audio.master.gain;const t=audio.ctx.currentTime;
+          hold(gain,t);gain.linearRampToValueAtTime(0,t+.2);
+          suspendTimer=setTimeout(()=>{if(version===soundVersion && (!audioEnabled||document.hidden)){stopOneShots();audio.ctx.suspend().catch(()=>{});}},220);
+        }
+        async function resumeSound(){
+          const version=++soundVersion;
+          clearTimeout(suspendTimer);
+          await audio.ctx.resume();
+          if(version===soundVersion && audioEnabled && !document.hidden)tuneSound();
+        }
+        function stopOneShots(level=-1){
+          for(const shot of oneShots)if(shot.phase>level){shot.osc.stop();shot.osc.disconnect();shot.gain.disconnect();oneShots.delete(shot);}
+        }
+        function cancelWhisper(){
+          clearTimeout(whisperTimer);whisperVersion++;whisperPhase=null;hiddenWhisper=false;
+          if('speechSynthesis' in window)window.speechSynthesis.cancel();
+        }
         function createAudio(){
           const Context=window.AudioContext||window.webkitAudioContext;
           if(!Context)throw new Error('Audio is not supported in this browser');
@@ -201,8 +230,10 @@
           const notes=[130.81,196,261.63,329.63];
           const voices=notes.map((hz,index)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type='sine';osc.frequency.value=hz;gain.gain.value=[.3,.18,.14,.08][index];osc.connect(gain);gain.connect(calm);osc.start();return osc;});
           const darkVoices=[32.7,49.2,65.7,98.1].map((hz,index)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=index===0?'sine':'triangle';osc.frequency.value=hz;gain.gain.value=[.5,.15,.09,.035][index];osc.connect(gain);gain.connect(drone);osc.start();return osc;});
-          const buffer=ctx.createBuffer(1,ctx.sampleRate*5,ctx.sampleRate);const data=buffer.getChannelData(0);let brown=0;
-          for(let i=0;i<data.length;i++){brown=(brown+Math.random()*.04-.02)/1.02;data[i]=brown*3.5;}
+          const buffer=ctx.createBuffer(1,ctx.sampleRate*5,ctx.sampleRate);const data=buffer.getChannelData(0);const fade=Math.floor(ctx.sampleRate*.1);const raw=new Float32Array(data.length+fade);let brown=0;
+          for(let i=0;i<raw.length;i++){brown=(brown+Math.random()*.04-.02)/1.02;raw[i]=brown*3.5;}
+          data.set(raw.subarray(0,data.length));
+          for(let i=0;i<fade;i++){const mix=i/(fade-1);data[i]=raw[data.length+i]*(1-mix)+raw[i]*mix;}
           const noise=ctx.createBufferSource();noise.buffer=buffer;noise.loop=true;
           const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=650;
           const air=ctx.createGain();air.gain.value=.11;noise.connect(filter);filter.connect(air);air.connect(master);noise.start();
@@ -211,7 +242,7 @@
         }
         function tuneSound(){
           if(!audio)return;
-          ramp(audio.master.gain,audioEnabled&&!document.hidden?.42:0,.35);
+          if(audioEnabled&&!document.hidden){hold(audio.master.gain,audio.ctx.currentTime);audio.master.gain.linearRampToValueAtTime(.42,audio.ctx.currentTime+.2);}
           ramp(audio.calm.gain,phase<2?.19:phase===2?.09:0,.9);
           ramp(audio.drone.gain,[0,.015,.07,.15,.23,.29][Math.max(phase,0)],.9);
           ramp(audio.air.gain,[.09,.11,.14,.2,.26,.31][Math.max(phase,0)],.9);
@@ -222,6 +253,8 @@
         function pulse(frequency,volume,when,length=.3,type='sine'){
           if(!audio||!audioEnabled||document.hidden)return;
           const ctx=audio.ctx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type;osc.frequency.setValueAtTime(frequency,when);osc.frequency.exponentialRampToValueAtTime(Math.max(20,frequency*.43),when+length);gain.gain.setValueAtTime(.0001,when);gain.gain.exponentialRampToValueAtTime(volume,when+.018);gain.gain.exponentialRampToValueAtTime(.0001,when+length);osc.connect(gain);gain.connect(audio.master);osc.start(when);osc.stop(when+length+.02);
+          const shot={osc,gain,phase};oneShots.add(shot);
+          osc.onended=()=>{osc.disconnect();gain.disconnect();oneShots.delete(shot);};
         }
         function beat(){
           if(!audio||!audioEnabled||document.hidden||phase<2)return;
@@ -231,13 +264,17 @@
         }
         function knock(level){if(!audio||!audioEnabled)return;const t=audio.ctx.currentTime;for(let i=0;i<3;i++)pulse(150-level*10,.1,t+i*.42,.12,'triangle');}
         function scheduleWhisper(level){
-          clearTimeout(whisperTimer);
-          if(!('speechSynthesis' in window)||!audioEnabled)return;
+          cancelWhisper();
+          if(!('speechSynthesis' in window)||!audioEnabled||level<3)return;
+          whisperPhase=level;
+          const version=whisperVersion;
+          if(document.hidden){hiddenWhisper=true;return;}
           whisperTimer=setTimeout(()=>{
             if(!audioEnabled||document.hidden||phase!==level)return;
             const phrases={3:'We have been waiting.',4:'You are not alone.',5:'Welcome home.'};
             const utterance=new SpeechSynthesisUtterance(phrases[level]);
             utterance.lang='en-US';utterance.rate=.66;utterance.pitch=.12;utterance.volume=.16;
+            utterance.onend=()=>{if(whisperVersion===version)whisperPhase=null;};
             window.speechSynthesis.speak(utterance);
           },2600);
         }
@@ -248,20 +285,20 @@
         soundButton.addEventListener('click',async()=>{
           if(audioBusy)return;audioBusy=true;
           try{
-            if(audioEnabled){audioEnabled=false;clearInterval(heartTimer);clearTimeout(whisperTimer);if('speechSynthesis' in window)window.speechSynthesis.cancel();tuneSound();await audio.ctx.suspend();}
-            else{if(!audio)audio=createAudio();await audio.ctx.resume();audioEnabled=true;lastBeat=0;tuneSound();clearInterval(heartTimer);heartTimer=setInterval(beat,150);if(phase>=3)scheduleWhisper(phase);}
+            if(audioEnabled){audioEnabled=false;clearInterval(heartTimer);cancelWhisper();fadeAndSuspend();}
+            else{if(!audio)audio=createAudio();audioEnabled=true;await resumeSound();lastBeat=0;clearInterval(heartTimer);heartTimer=setInterval(beat,150);if(phase>=3)scheduleWhisper(phase);}
             paintSound();
           }catch(error){audioEnabled=false;paintSound();soundLabel.textContent='Sound unavailable · try again';console.warn('Atmospheric audio could not start.',error.message);}
           finally{audioBusy=false;}
         });
         document.addEventListener('visibilitychange',()=>{
           if(!audio||!audioEnabled)return;
-          if(document.hidden){audio.ctx.suspend().catch(()=>{});if('speechSynthesis' in window)window.speechSynthesis.cancel();clearTimeout(whisperTimer);}
-          else{audio.ctx.resume().then(tuneSound).catch(()=>{});}
+          if(document.hidden){const interrupted=whisperPhase;cancelWhisper();whisperPhase=interrupted;hiddenWhisper=interrupted!==null;fadeAndSuspend();}
+          else{resumeSound().catch(()=>{});if(hiddenWhisper && phase>=3)scheduleWhisper(phase);}
         });
         function resetExperience(){
           resetting=true;
-          if('speechSynthesis' in window)window.speechSynthesis.cancel();clearTimeout(whisperTimer);
+          cancelWhisper();stopOneShots();
           window.scrollTo({top:0,left:0,behavior:'instant'});
           if(window.location.hash)history.replaceState(null,'',window.location.pathname+window.location.search);
           setPhase(0);body.style.setProperty('--decay','0');tuneSound();
