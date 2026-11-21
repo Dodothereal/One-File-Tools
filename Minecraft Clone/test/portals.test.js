@@ -132,7 +132,28 @@ test('world edits validate entire portal regions, including holes and disconnect
   extension[2]++;
   world.set(...extension, B.nether_portal);
   assert.equal(world.get(...extension), AIR);
-  assert.equal(world.get(...point(1, 1)), AIR);
+  assert.equal(world.get(...point(1, 1)), B.nether_portal);
+});
+
+test('touching parallel portals validate independently and only a damaged plane extinguishes', () => {
+  for (const axis of ['x', 'z']) for (const damaged of [0, 1]) {
+    const world = emptyWorld();
+    const point = (plane, u, y) => axis === 'x' ? [u, y, plane] : [plane, y, u];
+    for (let plane = 0; plane <= 1; plane++) {
+      for (const block of portalShape('nether', axis === 'x' ? 0 : plane, 3, axis === 'x' ? plane : 0, axis, false)) {
+        if (block[3] === B.obsidian) world.set(...block);
+      }
+      assert(lightNetherFrame(world, point(plane, 0, 3)));
+    }
+    removeNetherPortal(world, point(0, 1, 4));
+    for (let plane = 0; plane <= 1; plane++) for (let u = 1; u <= 2; u++) for (let y = 4; y <= 6; y++) {
+      assert.equal(world.get(...point(plane, u, y)), B.nether_portal);
+    }
+    world.set(...point(damaged, 1, 3), AIR);
+    for (let plane = 0; plane <= 1; plane++) for (let u = 1; u <= 2; u++) for (let y = 4; y <= 6; y++) {
+      assert.equal(world.get(...point(plane, u, y)), plane === damaged ? AIR : B.nether_portal);
+    }
+  }
 });
 
 test('preexisting damaged single-column portals are extinguished on adjacent base changes', () => {

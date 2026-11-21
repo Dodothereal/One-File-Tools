@@ -151,24 +151,33 @@ export function lightNetherFrame(world, placed) {
 }
 
 export function removeNetherPortal(world, changed) {
-  const checked = new Set();
-  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
-    const pending = [[changed[0] + dx, changed[1] + dy, changed[2] + dz]], region = [];
+  const planes = new Map(), candidates = new Map();
+  function scanPlane(start, axis) {
+    const key = `${axis}:${start}`;
+    if (planes.has(key)) return planes.get(key);
+    const point = (u, y) => axis === 'x' ? [u, y, start[2]] : [start[0], y, u];
+    const pending = [[start[axis === 'x' ? 0 : 2], start[1]]], visited = new Set(), region = [];
+    let minU = Infinity, maxU = -Infinity, minY = Infinity, maxY = -Infinity;
     while (pending.length) {
-      const [x, y, z] = pending.pop(), key = `${x},${y},${z}`;
-      if (checked.has(key) || world.get(x, y, z) !== B.nether_portal) continue;
-      checked.add(key);
-      region.push([x, y, z]);
-      pending.push([x + 1, y, z], [x - 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]);
+      const [u, y] = pending.pop(), key = `${u},${y}`;
+      if (visited.has(key) || world.get(...point(u, y)) !== B.nether_portal) continue;
+      visited.add(key);
+      region.push(point(u, y));
+      minU = Math.min(minU, u); maxU = Math.max(maxU, u);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      pending.push([u + 1, y], [u - 1, y], [u, y + 1], [u, y - 1]);
     }
-    if (!region.length) continue;
-    const [sx, , sz] = region[0];
-    const axis = region.every(([, , z]) => z === sz) ? 'x' : region.every(([x]) => x === sx) ? 'z' : null;
-    const point = (u, y) => axis === 'x' ? [u, y, sz] : [sx, y, u];
-    const us = region.map(p => p[axis === 'x' ? 0 : 2]), ys = region.map(p => p[1]);
-    if (axis && enclosedNetherFrame(world, point, Math.min(...us), Math.max(...us), Math.min(...ys), Math.max(...ys), region.length)) continue;
-    for (const p of region) world.set(...p, AIR, false);
+    const result = { region, valid: enclosedNetherFrame(world, point, minU, maxU, minY, maxY, region.length) };
+    for (const p of region) planes.set(`${axis}:${p}`, result);
+    return result;
   }
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+    const start = [changed[0] + dx, changed[1] + dy, changed[2] + dz];
+    if (world.get(...start) !== B.nether_portal) continue;
+    for (const axis of ['x', 'z']) for (const p of scanPlane(start, axis).region) candidates.set(`${p}`, p);
+  }
+  const invalid = [...candidates.values()].filter(p => !scanPlane(p, 'x').valid && !scanPlane(p, 'z').valid);
+  for (const p of invalid) world.set(...p, AIR, false);
 }
 
 export function updatePortalTravel(game, dt, dimensions) {
