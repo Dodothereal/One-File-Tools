@@ -208,19 +208,19 @@ export function buildPortal(game, kind) {
   const y = Math.floor(player.position[1]) - 1;
   if (y < 1 || y > 88) return 'Stand between y=2 and y=89 to build a portal.';
   const shape = portalShape(kind, x, y, z, alongX ? 'z' : 'x', false);
-  if (shape.some(([wx, wy, wz]) => blocks[world.get(wx, wy, wz)].unbreakable)) {
+  if (shape.some(([wx, wy, wz, id]) => world.get(wx, wy, wz) !== id && blocks[world.get(wx, wy, wz)].unbreakable)) {
     return 'Cannot build a portal over unbreakable blocks.';
   }
-  const clearance = shape.filter(([, wy]) => wy > y).map(([wx, wy, wz]) => [wx, wy, wz]);
+  const clearance = shape.filter(([, wy]) => wy > y);
   for (const [wx, wy, wz, id] of shape) {
     if (id !== portalIds[kind]) continue;
     if (kind === 'end') {
-      clearance.push([wx, wy + 1, wz], [wx, wy + 2, wz]);
+      clearance.push([wx, wy + 1, wz, AIR], [wx, wy + 2, wz, AIR]);
     } else if (wy <= y + 2) {
-      clearance.push([wx + fx, wy, wz + fz], [wx - fx, wy, wz - fz]);
+      clearance.push([wx + fx, wy, wz + fz, AIR], [wx - fx, wy, wz - fz, AIR]);
     }
   }
-  if (clearance.some(point => world.get(...point) !== AIR)) {
+  if (clearance.some(([wx, wy, wz, id]) => world.get(wx, wy, wz) !== AIR && world.get(wx, wy, wz) !== id)) {
     return 'Cannot build a portal here: opening or approach is obstructed. Find open ground or clear it first.';
   }
   for (const [wx, wy, wz, id] of shape) world.set(wx, wy, wz, id, false);

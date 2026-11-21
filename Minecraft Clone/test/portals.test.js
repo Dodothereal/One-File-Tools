@@ -276,3 +276,18 @@ test('east-facing End portal at shipped Overworld spawn refuses burial under nat
   assert.match(buildPortal({ world, player }, 'end'), /obstructed/);
   assert.deepEqual(world.edits, before);
 });
+
+test('portal commands reuse identical frame blocks and complete gates without false collisions', () => {
+  for (const kind of ['nether', 'end', 'city']) for (const yaw of [0, Math.PI / 2]) {
+    const world = emptyWorld(), player = new Player([0, 10, 0]);
+    player.yaw = yaw;
+    const alongX = yaw !== 0;
+    const shape = portalShape(kind, alongX ? 5 : -1, 9, alongX ? -1 : 5, alongX ? 'z' : 'x', false);
+    for (const block of shape) if (block[3] !== B[`${kind}_portal`]) world.set(...block);
+    assert.match(buildPortal({ world, player }, kind), /Built/);
+    for (const [x, y, z, id] of shape) assert.equal(world.get(x, y, z), id);
+    const before = structuredClone(world.edits);
+    assert.match(buildPortal({ world, player }, kind), /Built/);
+    assert.deepEqual(world.edits, before);
+  }
+});
