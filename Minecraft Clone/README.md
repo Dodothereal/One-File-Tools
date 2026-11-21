@@ -38,7 +38,8 @@ yet.
 
 Choose **Flight hangar** from the menu, press **J** while playing, or run
 `/jet kestrel`, `/jet wraith`, or `/jet eventide` in the world console.
-Jets launch above you when there's enough clearance.
+Jets launch above you when there's enough clearance. Overworld departures begin
+with a gentle climb; move the mouse up or down to adjust your pitch.
 
 | Aircraft | Style | Right mouse |
 | --- | --- | --- |

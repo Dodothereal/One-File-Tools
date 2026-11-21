@@ -37,7 +37,7 @@ export function findLaunchSite(world, [x,y,z], spec) {
 }
 
 export class Jet extends Vehicle {
-  constructor(id, position, pilot, mesh, weapons) {
+  constructor(id, position, pilot, mesh, weapons, world) {
     super();
     this.id = id;
     this.spec = jets[id];
@@ -46,13 +46,16 @@ export class Jet extends Vehicle {
     this.wasFlying = pilot.vehicle?.wasFlying ?? pilot.flying;
     this.yaw = pilot.vehicle?.yaw ?? pilot.yaw;
     this.heading = this.yaw;
-    this.pitch = this.desiredPitch = 0;
+    this.pitch = this.desiredPitch = world.dimension.id === 'overworld' ? Math.PI/15 : 0;
     this.roll = 0;
     this.throttle = .32;
     this.speed = this.spec.speed[0];
     this.view = 1;
     this.mesh = mesh;
     this.weapons = weapons;
+    const { span, length } = this.spec;
+    this.probes = [[0,0,0], [0,0,length], [0,0,-length], [0,1.35,-1.8],
+      [0,-.5,0], [span,-.1,-1.5], [-span,-.1,-1.5], [span*.57,-.1,-.4], [-span*.57,-.1,-.4]];
   }
 
   axes() {
@@ -86,14 +89,11 @@ export class Jet extends Vehicle {
     this.speed = approach(this.speed, target, dt, 2.7);
     const axes = this.axes();
     const next = offset(this.position, axes, 0, 0, this.speed*dt);
-    const { span, length } = this.spec;
-    const probes = [[0,0,0], [0,0,length], [0,0,-length], [0,1.35,-1.8],
-      [0,-.5,0], [span,-.1,-1.5], [-span,-.1,-1.5], [span*.57,-.1,-.4], [-span*.57,-.1,-.4]];
     const hitsTerrain = (x,y,z) => {
       const block = blocks[world.get(x,y,z)];
       return block.solid || block.liquid;
     };
-    if (next[1] < 2 || probes.some(([x,y,z]) =>
+    if (next[1] < 2 || this.probes.some(([x,y,z]) =>
       sweep(world, offset(this.position, prev, x,y,z), offset(next, axes, x,y,z), hitsTerrain))) {
       this.crashed = true;
       this.eject(pilot);

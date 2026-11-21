@@ -6,6 +6,7 @@ import { jets } from '../entities/jet-models.js';
 import { JetWeapons } from '../entities/jet-weapons.js';
 import { Player } from '../entities/player.js';
 import { AIR, BEDROCK, STONE, WATER } from '../world/blocks.js';
+import { dimensions } from '../world/dimensions.js';
 import { World } from '../world/world.js';
 
 const dt = 1/120;
@@ -15,7 +16,7 @@ function hangar(id) {
   const world = worldWith();
   const weapons = new JetWeapons({});
   const player = new Player([.5, 1.01, .5]);
-  const jet = new Jet(id, findLaunchSite(world, player.position, jets[id]), player, {}, weapons);
+  const jet = new Jet(id, findLaunchSite(world, player.position, jets[id]), player, {}, weapons, world);
   player.vehicle = jet;
   player.position = jet.position;
   return { world, weapons, player, jet };
@@ -50,6 +51,19 @@ test('launch selects open space or declines when a cavern is obstructed', () => 
     for (let y = 5; y < height; y++) set(0,y,0,STONE);
   }, 'nether');
   assert.equal(findLaunchSite(cavern, [.5,1,.5], jets.eventide), null);
+});
+
+test('idle Overworld departures climb over the terrain ahead of the default spawn', () => {
+  const world = new World(dimensions.get('overworld'), 2391);
+  for (const id of Object.keys(jets)) {
+    const player = new Player(world.spawn(18, 0));
+    player.yaw = -.5;
+    const launch = findLaunchSite(world, player.position, jets[id]);
+    player.vehicle = new Jet(id, launch, player, {}, new JetWeapons({}), world);
+    steps(20*120, dt => player.step(dt, new Set(), world));
+    assert.equal(player.vehicle?.id, id);
+    assert(player.position[1] > launch[1] + 45);
+  }
 });
 
 test('jets accelerate and bank; boost is distinct and collision safely returns the pilot', () => {

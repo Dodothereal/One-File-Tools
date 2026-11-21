@@ -74,7 +74,7 @@ class Game {
     if (!Object.hasOwn(jets, id)) return 'Unknown aircraft. Choose kestrel, wraith, or eventide.';
     const position = findLaunchSite(this.world, this.player.vehicle?.launchSite ?? this.player.position, jets[id]);
     if (!position) return 'Not enough clearance to launch here. Move to an open area and try again.';
-    this.player.vehicle = new Jet(id, position, this.player, this.fleet[id], this.jetWeapons);
+    this.player.vehicle = new Jet(id, position, this.player, this.fleet[id], this.jetWeapons, this.world);
     this.player.position = position;
   }
 
@@ -88,6 +88,12 @@ class Game {
     document.addEventListener('pointerlockchange', () => {
       this.keys.clear();
       if (document.pointerLockElement === this.canvas) {
+        if (!this.started) {
+          window.addEventListener('beforeunload', event => {
+            event.preventDefault();
+            event.returnValue = true;
+          });
+        }
         this.started = true;
         this.ui.show('play');
         this.canvas.focus();
@@ -101,6 +107,7 @@ class Game {
     window.addEventListener('keydown', event => {
       if (this.ui.view !== 'play') return;
       const { code } = event;
+      if (event.ctrlKey) event.preventDefault();
       if (!event.repeat && code === 'KeyJ') {
         this.ui.show('hangar');
         document.exitPointerLock();
