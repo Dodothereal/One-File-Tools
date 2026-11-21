@@ -18,7 +18,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .wordmark b, .accent, .world-tag b, .chat p b { color: var(--lime); }
 .brand-cube { width: 19px; height: 21px; background: conic-gradient(from 60deg at 50% 51%, #72914c 0deg 120deg, #9dbb60 120deg 240deg, var(--lime) 240deg); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 .mark-divider { height: 16px; width: 1px; background: #d4e3cf5e; }
-.overlay { position: fixed; inset: 0; display: flex; align-items: center; padding: 75px clamp(20px, 5vw, 76px) 38px; background: linear-gradient(90deg, #0b1512f4 0%, #101c17ed 28%, #101c1790 54%, #101c1724 83%), linear-gradient(0deg,#131e19a8,transparent 35%); overflow: auto; }
+.overlay { position: fixed; inset: 0; background: linear-gradient(90deg, #0b1512f4 0%, #101c17ed 28%, #101c1790 54%, #101c1724 83%), linear-gradient(0deg,#131e19a8,transparent 35%); }
+.menu-scroll { position: absolute; inset: 64px 0 0; display: flex; padding: 11px clamp(20px, 5vw, 76px) 38px; overflow: auto; }
 .menu { width: min(100%, 570px); margin-block: auto; position: relative; z-index: 1; }
 .eyebrow { display: flex; align-items: center; gap: 11px; color: var(--lime); font: 700 11px var(--mono); letter-spacing: .17em; }
 .live-dot { width: 7px; height: 7px; display: inline-block; background: var(--lime); box-shadow: 0 0 13px #d2f67882; }
