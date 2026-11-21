@@ -1,0 +1,69 @@
+import { AIR, blocks } from './blocks.js';
+
+export const SIZE = 16;
+export const HEIGHT = 96;
+export const chunkOf = n => Math.floor(n / SIZE);
+export const chunkKey = (x, z) => `${x},${z}`;
+export const indexOf = (x, y, z) => (y * SIZE + z) * SIZE + x;
+
+export class World {
+  constructor(dimension, seed, edits = new Map()) {
+    this.dimension = dimension;
+    this.seed = seed;
+    this.generator = dimension.create(seed);
+    this.chunks = new Map();
+    this.edits = edits;
+    this.onEdit = null;
+  }
+
+  chunk(cx, cz) {
+    const key = chunkKey(cx, cz);
+    if (!this.chunks.has(key)) {
+      const data = new Uint8Array(SIZE * SIZE * HEIGHT);
+      this.generator.generate({
+        x: cx * SIZE, z: cz * SIZE, size: SIZE, height: HEIGHT,
+        set(x, y, z, id, replace) {
+          if (x < 0 || z < 0 || y < 0 || x >= SIZE || z >= SIZE || y >= HEIGHT) return;
+          const i = indexOf(x, y, z);
+          if (replace === undefined || data[i] === replace) data[i] = id;
+        },
+      });
+      for (const [i, id] of this.edits.get(key) ?? []) data[i] = id;
+      this.chunks.set(key, data);
+    }
+    return this.chunks.get(key);
+  }
+
+  get(x, y, z) {
+    if (y < 0 || y >= HEIGHT) return AIR;
+    const cx = chunkOf(x), cz = chunkOf(z);
+    return this.chunk(cx, cz)[indexOf(x - cx * SIZE, y, z - cz * SIZE)];
+  }
+
+  set(x, y, z, id) {
+    if (!blocks[id] || y < 0 || y >= HEIGHT) return false;
+    const cx = chunkOf(x), cz = chunkOf(z);
+    const key = chunkKey(cx, cz);
+    const i = indexOf(x - cx * SIZE, y, z - cz * SIZE);
+    const data = this.chunk(cx, cz);
+    if (data[i] === id) return false;
+    data[i] = id;
+    if (!this.edits.has(key)) this.edits.set(key, new Map());
+    this.edits.get(key).set(i, id);
+    this.onEdit?.(cx, cz);
+    return true;
+  }
+
+  prune(cx, cz, radius) {
+    for (const key of this.chunks.keys()) {
+      const [x, z] = key.split(',').map(Number);
+      if (Math.max(Math.abs(x - cx), Math.abs(z - cz)) > radius) this.chunks.delete(key);
+    }
+  }
+
+  spawn(x = 0, z = 0) {
+    let y = HEIGHT - 1;
+    while (y > 0 && this.get(x, y, z) === AIR) y--;
+    return [x + 0.5, y + 1.01, z + 0.5];
+  }
+}
