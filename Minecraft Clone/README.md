@@ -31,8 +31,10 @@ Graphics settings persist locally where browser storage is available. World edit
 are kept in memory for the current page session, including across dimension changes.
 Creative is the default; survival mode currently changes movement and reach, not
 health, hunger, or crafting. Use `/dimension nether` to visit the Nether's lava
-seas, forests, caves and bridges. End and City have block palettes but are not
-playable yet. Portal blocks are decorative until travel is implemented.
+seas, forests, caves and bridges. `/dimension end` visits floating islands,
+obsidian pillars and outer settlements; `/dimension city` visits an infinite
+street grid with towers, parks and plazas. Portal blocks are decorative until
+travel is implemented.
 Cockpit view falls back to first person until a vehicle supplies a camera.
 
 ## ARCHITECTURE
