@@ -144,6 +144,19 @@ export function lightNetherFrame(world, placed) {
   return false;
 }
 
+export function removeNetherPortal(world, broken) {
+  const pending = [];
+  for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+    pending.push([broken[0] + x, broken[1] + y, broken[2] + z]);
+  }
+  while (pending.length) {
+    const [x, y, z] = pending.pop();
+    if (world.get(x, y, z) !== B.nether_portal) continue;
+    world.set(x, y, z, AIR);
+    pending.push([x + 1, y, z], [x - 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]);
+  }
+}
+
 export function updatePortalTravel(game, dt, dimensions) {
   const state = game.portalState ??= { cooldown: 0, contact: null, elapsed: 0 };
   state.cooldown = Math.max(0, state.cooldown - dt);

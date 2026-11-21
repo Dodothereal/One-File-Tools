@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { AIR, STONE, BEDROCK, dimensionBlocks as B } from '../world/blocks.js';
 import { World } from '../world/world.js';
 import { dimensions } from '../world/dimensions.js';
-import { portalTarget, portalShape, lightNetherFrame, updatePortalTravel, buildPortal } from '../world/portals.js';
+import { portalTarget, portalShape, lightNetherFrame, removeNetherPortal, updatePortalTravel, buildPortal } from '../world/portals.js';
 import { createCommands } from '../commands/builtin.js';
 import { registerPortalCommands } from '../commands/portals.js';
 import { Player } from '../entities/player.js';
@@ -47,6 +47,23 @@ test('portal mappings toggle each destination back to Overworld', () => {
     assert.equal(portalTarget(B[`${kind}_portal`], kind), 'overworld');
   }
   assert.equal(portalTarget(STONE, 'overworld'), null);
+});
+
+test('breaking frame sides, tops, bases and corners extinguishes only connected Nether portals', () => {
+  for (const axis of ['x', 'z']) for (const [u, y] of [[0, 2], [3, 2], [1, 4], [1, 0], [0, 0], [3, 4]]) {
+    const world = emptyWorld(), point = frame(world, 2, 3, axis);
+    assert(lightNetherFrame(world, point(0, 0)));
+    world.set(20, 5, 20, B.nether_portal);
+    world.set(...point(u, y), AIR);
+    removeNetherPortal(world, point(u, y));
+    for (let a = 1; a <= 2; a++) for (let b = 1; b <= 3; b++) assert.equal(world.get(...point(a, b)), AIR);
+    assert.equal(world.get(20, 5, 20), B.nether_portal);
+    const entered = [];
+    const game = { world, player: new Player(point(1, 1).map(n => n + .1)), enterDimension(d) { entered.push(d.id); } };
+    updatePortalTravel(game, 2, dimensions);
+    assert.deepEqual(entered, []);
+    removeNetherPortal(world, point(u, y));
+  }
 });
 
 test('portal contact waits one second, resets on exit and cools down after travel', () => {
