@@ -1,4 +1,5 @@
 import { AIR, blocks } from './blocks.js';
+import { removeNetherPortal } from './portals.js';
 
 export const SIZE = 16;
 export const HEIGHT = 96;
@@ -40,7 +41,7 @@ export class World {
     return this.chunk(cx, cz)[indexOf(x - cx * SIZE, y, z - cz * SIZE)];
   }
 
-  set(x, y, z, id) {
+  set(x, y, z, id, updatePortals = true) {
     if (!blocks[id] || y < 0 || y >= HEIGHT) return false;
     const cx = chunkOf(x), cz = chunkOf(z);
     const key = chunkKey(cx, cz);
@@ -50,6 +51,7 @@ export class World {
     data[i] = id;
     if (!this.edits.has(key)) this.edits.set(key, new Map());
     this.edits.get(key).set(i, id);
+    if (updatePortals) removeNetherPortal(this, [x, y, z]);
     this.onEdit?.(cx, cz);
     return true;
   }

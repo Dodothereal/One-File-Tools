@@ -70,7 +70,7 @@ test('breaking frame sides, tops, bases and corners extinguishes only connected 
   for (const axis of ['x', 'z']) for (const [u, y] of [[0, 2], [3, 2], [1, 4], [1, 0], [0, 0], [3, 4]]) {
     const world = emptyWorld(), point = frame(world, 2, 3, axis);
     assert(lightNetherFrame(world, point(0, 0)));
-    world.set(20, 5, 20, B.nether_portal);
+    for (const block of portalShape('nether', 19, 4, 20, 'x', false)) world.set(...block, false);
     world.set(...point(u, y), AIR);
     removeNetherPortal(world, point(u, y));
     for (let a = 1; a <= 2; a++) for (let b = 1; b <= 3; b++) assert.equal(world.get(...point(a, b)), AIR);
@@ -85,12 +85,12 @@ test('breaking frame sides, tops, bases and corners extinguishes only connected 
 
 test('portal contact waits one second, resets on exit and cools down after travel', () => {
   const world = emptyWorld();
-  world.set(0, 5, 0, B.nether_portal);
+  for (const block of portalShape('nether', -1, 4, 0, 'x', false)) world.set(...block, false);
   const entered = [];
   const game = { world, player: new Player([.5, 5, .5]), enterDimension(d) { entered.push(d.id); } };
   updatePortalTravel(game, .6, dimensions);
   assert.deepEqual(entered, []);
-  game.player.position = [2, 5, 0];
+  game.player.position = [3, 5, 0];
   updatePortalTravel(game, .5, dimensions);
   game.player.position = [.5, 5, .5];
   updatePortalTravel(game, .6, dimensions);
@@ -107,6 +107,63 @@ test('portal contact waits one second, resets on exit and cools down after trave
   game.portalState.cooldown = 0;
   updatePortalTravel(game, 2, dimensions);
   assert.equal(entered.length, 2);
+});
+
+test('world edits validate entire portal regions, including holes and disconnected remnants', () => {
+  for (const axis of ['x', 'z']) for (const [u, y, id] of [[1, 1, STONE], [1, 2, B.obsidian], [0, 2, STONE], [1, 0, AIR]]) {
+    const world = emptyWorld(), point = frame(world, 2, 3, axis);
+    assert(lightNetherFrame(world, point(0, 0)));
+    world.set(...point(u, y), id);
+    for (let a = 1; a <= 2; a++) for (let b = 1; b <= 3; b++) {
+      assert.equal(world.get(...point(a, b)), a === u && b === y ? id : AIR);
+    }
+    assert.equal(world.get(...point(u, y)), id);
+    removeNetherPortal(world, point(u, y));
+  }
+  for (const axis of ['x', 'z']) {
+    const world = emptyWorld(), point = frame(world, 2, 3, axis);
+    assert(lightNetherFrame(world, point(0, 0)));
+    for (let u = 1; u <= 2; u++) world.set(...point(u, 2), STONE);
+    for (let u = 1; u <= 2; u++) for (const y of [1, 3]) assert.equal(world.get(...point(u, y)), AIR);
+  }
+  const world = emptyWorld(), point = frame(world, 2, 3);
+  assert(lightNetherFrame(world, point(0, 0)));
+  const extension = point(1, 1);
+  extension[2]++;
+  world.set(...extension, B.nether_portal);
+  assert.equal(world.get(...extension), AIR);
+  assert.equal(world.get(...point(1, 1)), AIR);
+});
+
+test('preexisting damaged single-column portals are extinguished on adjacent base changes', () => {
+  for (const axis of ['x', 'z']) for (const narrow of [false, true]) {
+    const shape = portalShape('nether', 0, 3, 0, axis, false);
+    const world = new World({ id: 'overworld', create: () => ({ generate({ x, z, set }) {
+      for (const [wx, y, wz, id] of shape) {
+        const u = axis === 'x' ? wx : wz;
+        set(wx - x, y, wz - z, id === B.nether_portal && u === 1 && (narrow || y === 4) ? STONE : id);
+      }
+    } }) }, 1);
+    const point = (u, y) => axis === 'x' ? [u, y, 0] : [0, y, u];
+    world.set(...point(2, 3), AIR);
+    for (let u = 1; u <= 2; u++) for (let y = 4; y <= 6; y++) assert.notEqual(world.get(...point(u, y)), B.nether_portal);
+    const entered = [];
+    updatePortalTravel({ world, player: new Player(point(2, 4)), enterDimension(d) { entered.push(d.id); } }, 2, dimensions);
+    assert.deepEqual(entered, []);
+  }
+});
+
+test('validation preserves fully enclosed minimum and maximum portals near unrelated edits', () => {
+  for (const axis of ['x', 'z']) for (const [width, height] of [[2, 3], [21, 21]]) {
+    const world = emptyWorld(), point = frame(world, width, height, axis);
+    assert(lightNetherFrame(world, point(0, 0)));
+    const nearby = point(1, 1);
+    nearby[axis === 'x' ? 2 : 0]++;
+    world.set(...nearby, STONE);
+    world.set(...nearby, AIR);
+    removeNetherPortal(world, nearby);
+    for (let u = 1; u <= width; u++) for (let y = 1; y <= height; y++) assert.equal(world.get(...point(u, y)), B.nether_portal);
+  }
 });
 
 test('mining approach obsidian outside the portal plane leaves intact gates lit', () => {

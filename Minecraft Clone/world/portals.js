@@ -109,6 +109,18 @@ export function withPortals(generator, dimension) {
   };
 }
 
+function enclosedNetherFrame(world, point, minU, maxU, minY, maxY, area) {
+  const width = maxU - minU + 1, height = maxY - minY + 1;
+  if (width < 2 || width > 21 || height < 3 || height > 21 || minY < 1 || maxY > 94 || area !== width * height) return false;
+  for (let u = minU - 1; u <= maxU + 1; u++) {
+    if (world.get(...point(u, minY - 1)) !== B.obsidian || world.get(...point(u, maxY + 1)) !== B.obsidian) return false;
+  }
+  for (let y = minY; y <= maxY; y++) {
+    if (world.get(...point(minU - 1, y)) !== B.obsidian || world.get(...point(maxU + 1, y)) !== B.obsidian) return false;
+  }
+  return true;
+}
+
 export function lightNetherFrame(world, placed) {
   const changed = world.get(...placed);
   if (changed !== B.obsidian && changed !== AIR) return false;
@@ -129,39 +141,33 @@ export function lightNetherFrame(world, placed) {
       if (maxU - minU >= 21 || maxY - minY >= 21) { valid = false; break; }
       pending.push([u + 1, y], [u - 1, y], [u, y + 1], [u, y - 1]);
     }
-    if (!valid || maxU - minU < 1 || maxY - minY < 2 || visited.size !== (maxU - minU + 1) * (maxY - minY + 1)) continue;
-    for (let u = minU - 1; u <= maxU + 1; u++) {
-      if (world.get(...point(u, minY - 1)) !== B.obsidian || world.get(...point(u, maxY + 1)) !== B.obsidian) valid = false;
-    }
-    for (let y = minY; y <= maxY; y++) {
-      if (world.get(...point(minU - 1, y)) !== B.obsidian || world.get(...point(maxU + 1, y)) !== B.obsidian) valid = false;
-    }
-    if (valid) {
-      for (const [u, y] of visited.values()) world.set(...point(u, y), B.nether_portal);
+    if (valid && enclosedNetherFrame(world, point, minU, maxU, minY, maxY, visited.size)) {
+      for (const [u, y] of visited.values()) world.set(...point(u, y), B.nether_portal, false);
+      removeNetherPortal(world, placed);
       return true;
     }
   }
   return false;
 }
 
-export function removeNetherPortal(world, broken) {
-  for (const axis of ['x', 'z']) {
-    const point = (u, y) => axis === 'x' ? [u, y, broken[2]] : [broken[0], y, u];
-    const origin = broken[axis === 'x' ? 0 : 2];
-    const pending = [];
-    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
-      const u = origin + a, y = broken[1] + b;
-      if (world.get(...point(u, y)) !== B.nether_portal) continue;
-      if (world.get(...point(u - 1, y)) === B.nether_portal || world.get(...point(u + 1, y)) === B.nether_portal) {
-        pending.push([u, y]);
-      }
-    }
+export function removeNetherPortal(world, changed) {
+  const checked = new Set();
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+    const pending = [[changed[0] + dx, changed[1] + dy, changed[2] + dz]], region = [];
     while (pending.length) {
-      const [u, y] = pending.pop();
-      if (world.get(...point(u, y)) !== B.nether_portal) continue;
-      world.set(...point(u, y), AIR);
-      pending.push([u + 1, y], [u - 1, y], [u, y + 1], [u, y - 1]);
+      const [x, y, z] = pending.pop(), key = `${x},${y},${z}`;
+      if (checked.has(key) || world.get(x, y, z) !== B.nether_portal) continue;
+      checked.add(key);
+      region.push([x, y, z]);
+      pending.push([x + 1, y, z], [x - 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]);
     }
+    if (!region.length) continue;
+    const [sx, , sz] = region[0];
+    const axis = region.every(([, , z]) => z === sz) ? 'x' : region.every(([x]) => x === sx) ? 'z' : null;
+    const point = (u, y) => axis === 'x' ? [u, y, sz] : [sx, y, u];
+    const us = region.map(p => p[axis === 'x' ? 0 : 2]), ys = region.map(p => p[1]);
+    if (axis && enclosedNetherFrame(world, point, Math.min(...us), Math.max(...us), Math.min(...ys), Math.max(...ys), region.length)) continue;
+    for (const p of region) world.set(...p, AIR, false);
   }
 }
 
@@ -217,6 +223,7 @@ export function buildPortal(game, kind) {
   if (clearance.some(point => world.get(...point) !== AIR)) {
     return 'Cannot build a portal here: opening or approach is obstructed. Find open ground or clear it first.';
   }
-  for (const [wx, wy, wz, id] of shape) world.set(wx, wy, wz, id);
+  for (const [wx, wy, wz, id] of shape) world.set(wx, wy, wz, id, false);
+  for (const [wx, wy, wz] of shape) removeNetherPortal(world, [wx, wy, wz]);
   return `Built ${kind} portal. Step inside to travel.`;
 }

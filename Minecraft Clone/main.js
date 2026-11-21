@@ -3,14 +3,14 @@ import { Renderer } from './engine/renderer.js';
 import { ChunkStream } from './engine/stream.js';
 import { raycast } from './engine/raycast.js';
 import { viewAxes } from './engine/math.js';
-import { AIR, blocks, dimensionBlocks as B } from './world/blocks.js';
+import { AIR, blocks } from './world/blocks.js';
 import { dimensions } from './world/dimensions.js';
 import { World } from './world/world.js';
 import { Player, playerMesh } from './entities/player.js';
 import { perspectives, resolveCamera } from './entities/camera.js';
 import { createCommands } from './commands/builtin.js';
 import { registerPortalCommands } from './commands/portals.js';
-import { lightNetherFrame, removeNetherPortal, updatePortalTravel } from './world/portals.js';
+import { lightNetherFrame, updatePortalTravel } from './world/portals.js';
 import { Interface, el } from './ui/interface.js';
 import { loadSettings } from './ui/settings.js';
 
@@ -123,7 +123,6 @@ class Game {
       const broken = this.world.get(...hit.block);
       if (e.button === 0 && !blocks[broken].unbreakable) {
         this.world.set(...hit.block, AIR);
-        if (broken === B.obsidian) removeNetherPortal(this.world, hit.block);
         lightNetherFrame(this.world, hit.block);
       }
       if (e.button === 2 && hit.adjacent && !this.player.intersects(...hit.adjacent)) {
