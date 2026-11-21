@@ -1,6 +1,6 @@
 import { buildPortal } from '../world/portals.js';
 
 export function registerPortalCommands(registry) {
-  registry.register('portal', '/portal <nether|end|city>', 'Build a portal in front of you', ([kind], game) => buildPortal(game, kind));
+  registry.register('portal', '/portal <nether|end|city>', 'Build a portal in front of you', ([kind], game) => buildPortal(game, kind), args => args.length ? [] : ['nether', 'end', 'city']);
   return registry;
 }

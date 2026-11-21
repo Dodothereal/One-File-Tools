@@ -86,7 +86,7 @@ per frame. A single chunk generation or mesh can exceed that budget; there is no
 worker. The overlay shows FPS, frame interval, drawn tiles/triangles and pending
 tiles. Actual performance depends on the GPU, resolution and dimension generator.
 
-The console supports Tab completion of command names and `/help [command]`:
+The console supports Tab completion of command names and known argument values (graphics presets, setting keys, booleans, and other named choices), plus `/help [command]`. A unique match is inserted; multiple matches are listed in the console:
 
 - `/graphics [Potato|Low|Balanced|High|Ultra|Ultra++]`, `/render <2-64>`,
   `/fov <60-105>`, `/set <option> <value>` (no arguments lists valid options).
@@ -133,6 +133,7 @@ The console supports Tab completion of command names and `/help [command]`:
 - **`ui/` and `commands/`**: `Interface` owns the HUD, pause menu, graphics and
   console. `ui/settings.js` handles preferences (Potato through Ultra++).
   `createCommands()` returns a `CommandRegistry`; add commands with
-  `register(name, usage, description, (args, game) => output)`.
+  `register(name, usage, description, (args, game) => output, complete)`.
+  The optional `complete(previousArgs)` callback returns known values for the current argument.
 - **`main.js`** wires the browser input and render loop together. `build.mjs`
   bundles the modules and embeds CSS and JS into the standalone HTML.

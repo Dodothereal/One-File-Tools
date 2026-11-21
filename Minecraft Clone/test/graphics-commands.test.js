@@ -76,7 +76,7 @@ test('graphics commands validate all option kinds and complete names', () => {
   run('/perf'); assert.equal(game.settings.overlay, true);
   for (const command of ['/graphics nope','/render','/render 65','/render 2.5','/fov 59','/set','/set ao perhaps','/set fog off','/set fpsLimit 45','/set distance NaN','/set missing 3']) assert.match(run(command), /Usage:/, command);
   assert.deepEqual(commands.complete('/gra'), ['/graphics']);
-  assert.deepEqual(commands.complete('/graphics u'), []);
+  assert.deepEqual(commands.complete('/graphics u'), ['/graphics Ultra', '/graphics Ultra++']);
   assert(commands.complete('/').includes('/help'));
 });
 

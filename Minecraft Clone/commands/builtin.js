@@ -30,7 +30,7 @@ export function createCommands(registry = new CommandRegistry()) {
     if (!name) invalid('Unknown graphics preset.');
     change(game, { ...presets[name], preset: name });
     return `Graphics set to ${name}.`;
-  });
+  }, args => args.length ? [] : Object.keys(presets));
   registry.register('set', '/set <option> <value>', 'Set any graphics or camera option', ([key, raw, ...extra], game) => {
     if (!Object.hasOwn(settingRules, key ?? '') || raw === undefined || extra.length) invalid('Options: ' + Object.keys(settingRules).join(', '));
     const rule = settingRules[key];
@@ -50,6 +50,14 @@ export function createCommands(registry = new CommandRegistry()) {
     }
     change(game, { [key]: value });
     return `${key} = ${value}`;
+  }, args => {
+    if (!args.length) return Object.keys(settingRules);
+    if (args.length !== 1) return [];
+    const rule = settingRules[args[0]];
+    if (rule === 'boolean') return ['true', 'false', 'on', 'off'];
+    if (args[0] === 'fog') return rule;
+    if (args[0] === 'fpsLimit') return rule.map(value => value === 0 ? 'unlimited' : String(value));
+    return [];
   });
   for (const [name,key,low,high] of [['render','distance',2,64],['fov','fov',60,105]]) {
     registry.register(name, `/${name} <${low}-${high}>`, `Set ${key}`, (args, game) => {
@@ -80,7 +88,7 @@ export function createCommands(registry = new CommandRegistry()) {
       }
       if (frameEdits?.length) lightNetherFrames(game.world, frameEdits);
       return `Changed ${changed} blocks.`;
-    });
+    }, args => args.length === (name === 'fill' ? 6 : 3) ? blocks.map(block => block.key) : []);
   }
   registry.register('speed', '/speed <0.1-5>', 'Set movement speed multiplier', (args, game) => {
     if (args.length !== 1) invalid('Expected one multiplier.');
@@ -106,7 +114,7 @@ export function createCommands(registry = new CommandRegistry()) {
     if (!name) return [...registry.commands.values()].map(command => command.usage).join('\n');
     const command = registry.commands.get(name.replace(/^\//, ''));
     return command ? `${command.usage} — ${command.description}` : 'Unknown command.';
-  });
+  }, args => args.length ? [] : [...registry.commands.keys()]);
   registry.register('tp', '/tp <x> <y> <z>', 'Teleport; ~ coordinates are relative', (args, game) => {
     if (args.length !== 3) return 'Usage: /tp <x> <y> <z>';
     const target = args.map((arg, i) => arg[0] === '~'
@@ -119,14 +127,14 @@ export function createCommands(registry = new CommandRegistry()) {
     if (mode !== 'creative' && mode !== 'survival') return 'Usage: /gamemode <creative|survival>';
     game.player.setMode(mode);
     return `Game mode set to ${mode}.`;
-  });
+  }, args => args.length ? [] : ['creative', 'survival']);
   registry.register('time', '/time <day|noon|sunset|night|ticks>', 'Set the world clock (0–23999)', ([value], game) => {
     const times = { day: 1000, noon: 6000, sunset: 12000, night: 18000 };
     const ticks = Object.hasOwn(times, value) ? times[value] : Number(value);
     if (!value || !Number.isFinite(ticks) || ticks < 0 || ticks >= 24000) return 'Usage: /time <day|noon|sunset|night|0–23999>';
     game.time = ticks / 24000;
     return `Time set to ${value}.`;
-  });
+  }, args => args.length ? [] : ['day', 'noon', 'sunset', 'night']);
   registry.register('dimension', '/dimension <id>', 'Travel to a registered dimension', ([id], game) => {
     if (!id) return 'Dimensions: ' + [...dimensions.values()].map(d => d.id + (d.create ? '' : ' (not yet playable)')).join(', ');
     const dimension = dimensions.get(id);
@@ -134,7 +142,7 @@ export function createCommands(registry = new CommandRegistry()) {
     if (!dimension.create) return `${dimension.name} is registered but not yet playable.`;
     game.enterDimension(dimension);
     return `Entered ${dimension.name}.`;
-  });
+  }, args => args.length ? [] : [...dimensions.keys()]);
   registry.register('give', '/give <block> [slot]', 'Put a block in your hotbar (slots 1–9)', ([key, slot], game) => {
     const block = blocks.find(b => b.key === key || String(b.id) === key);
     if (!block?.id || !block.solid || block.unbreakable) {
@@ -144,7 +152,8 @@ export function createCommands(registry = new CommandRegistry()) {
     if (!Number.isInteger(index) || index < 0 || index >= 9) return 'Slot must be from 1 to 9.';
     game.player.hotbar[index] = block.id;
     return `Added ${block.name} to slot ${index + 1}.`;
-  });
+  }, args => !args.length ? blocks.filter(block => block.id && block.solid && !block.unbreakable).map(block => block.key)
+    : args.length === 1 ? Array.from({ length: 9 }, (_, index) => String(index + 1)) : []);
   registry.register('seed', '/seed', 'Show the current world seed', (_, game) => `World seed: ${game.world.seed}`);
   return registry;
 }
