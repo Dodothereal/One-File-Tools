@@ -61,11 +61,11 @@
   </head>
   <body data-phase="0">
     <svg class="entity-defs" width="0" height="0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
-      <linearGradient id="entity-body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#0b0807"/><stop offset=".65" stop-color="#090706"/><stop offset="1" stop-color="#090706" stop-opacity="0"/></linearGradient>
+      <linearGradient id="entity-body" x1="0" y1="0" x2="0" y2="1" color-interpolation="sRGB"><stop stop-color="#080404"/><stop offset=".65" stop-color="#080404"/><stop offset="1" stop-color="#080404" stop-opacity="0"/></linearGradient>
       <radialGradient id="entity-feather"><stop offset=".55" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
       <mask id="entity-edge" maskUnits="userSpaceOnUse" x="550" y="325" width="100" height="190"><ellipse cx="601" cy="419" rx="43" ry="99" fill="url(#entity-feather)"/></mask>
-      <filter id="entity-soft" x="-.2" y="-.1" width="1.4" height="1.2"><feGaussianBlur stdDeviation=".8"/></filter>
-      <filter id="entity-face-dark"><feColorMatrix type="saturate" values=".15"/><feComponentTransfer><feFuncR type="linear" slope=".5"/><feFuncG type="linear" slope=".5"/><feFuncB type="linear" slope=".5"/></feComponentTransfer></filter>
+      <filter id="entity-soft" x="-.2" y="-.1" width="1.4" height="1.2" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".8"/></filter>
+      <filter id="entity-face-dark" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope=".5"/><feFuncG type="linear" slope=".4"/><feFuncB type="linear" slope=".4"/></feComponentTransfer></filter>
       <mask id="entity-face-light" maskUnits="userSpaceOnUse" x="582" y="333" width="38" height="54">
         <ellipse cx="601" cy="358" rx="15" ry="24" fill="url(#entity-feather)" opacity=".12"/>
         <g filter="url(#entity-soft)"><ellipse cx="595" cy="352" rx="4" ry="2" fill="url(#entity-feather)"/><ellipse cx="607" cy="352" rx="4" ry="2" fill="url(#entity-feather)"/><ellipse cx="601" cy="370" rx="10" ry="5" fill="url(#entity-feather)"/></g>
@@ -79,7 +79,7 @@
     </defs></svg>
     <div class="reading-line" aria-hidden="true"></div>
     <div class="topline">A little less noise. A little more you. <span>✳</span> Welcome to Stillwell.</div>
-    <header class="site-header">
+    <header class="site-header" tabindex="-1" style="outline:none">
       <div class="wrap header-inner">
         <a class="brand" href="#home" aria-label="Stillwell home"><svg class="brand-mark" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M18 3v30M3 18h30M7.4 7.4l21.2 21.2M7.4 28.6L28.6 7.4" stroke="currentColor" stroke-width="1.3"/><circle cx="18" cy="18" r="8.5" fill="currentColor"/><circle cx="18" cy="18" r="3.5" fill="#f5f3eb"/></svg>stillwell<span style="font:10px var(--font);align-self:flex-start;margin-top:3px;letter-spacing:0">®</span></a>
         <nav class="nav" aria-label="Main navigation"><a href="#feeling">The feeling</a><a href="#practice">The practice</a><a href="#place">Your place</a><a class="nav-cta" href="#feeling">Find your stillness <span>↗</span></a></nav>
@@ -389,7 +389,7 @@
           window.scrollTo({top:0,left:0,behavior:'instant'});
           if(window.location.hash)history.replaceState(null,'',window.location.pathname+window.location.search);
           setPhase(0);writeStyle(body,'--decay','0');tuneSound();
-          requestAnimationFrame(()=>{resetting=false;render();$('.brand').focus({preventScroll:true});});
+          requestAnimationFrame(()=>{resetting=false;render();$('.site-header').focus({preventScroll:true});});
         }
         document.querySelectorAll('[data-reset]').forEach(button=>button.addEventListener('click',resetExperience));
         document.addEventListener('keydown',(event)=>{if(event.key==='Escape'&&phase>=3)resetExperience();});

@@ -12,6 +12,23 @@ python3 -m http.server 3000 --bind 0.0.0.0
 
 Open http://localhost:3000. This is a static production site; no build is needed. The HTML can also be opened directly, except the optional web manifest requires HTTP.
 
+## Offline single-file build
+
+From the repository root, run `npm run build:stillwell` (Node.js, no dependencies or network needed).
+This generates `experiences/stillwell/stillwell-standalone.html`, which can be opened with `file://`
+or distributed on its own. Images, SVG portrait references, icons, CSS images, and fonts are embedded
+as base64 data URIs; the manifest and font preconnect links are removed. Ordinary navigation links
+remain links. Sound still requires opt-in; installed browser speech voices may depend on the OS.
+
+`assets/fonts/fonts.css` and its six WOFF2 files are vendored Google Fonts Latin/Latin Extended
+subsets for DM Sans (variable weights 400–700) and Instrument Serif (normal/italic).
+They were fetched from the [Google Fonts CSS endpoint](https://fonts.googleapis.com/css2?family=DM+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&display=swap)
+using a Chrome user agent to request WOFF2. The corresponding SIL Open Font Licenses are included
+beside them. The normal source page continues to use Google Fonts; only the standalone build
+uses the offline copies. To update fonts, replace the vendored WOFF2 files and local URLs in
+`fonts.css`, then rebuild. `node scripts/test-stillwell-standalone.cjs` checks reproducibility,
+resource embedding, and empty/error cases after building.
+
 ## Experience
 
 - Six scroll-driven chapters progress from a cream-and-sage marketing site to an uncanny house, corrupted transmission, descending corridor, and final presence.
