@@ -17,6 +17,7 @@ export class Interface {
     el('play').addEventListener('click', () => game.lock());
     el('settings').addEventListener('click', () => this.show('settings'));
     el('back').addEventListener('click', () => this.show('menu'));
+    window.addEventListener('keydown', event => this.backFromSettings(event));
     el('preset').replaceChildren(...['Custom', ...Object.keys(presets)].map(name => new Option(name, name)));
     el('preset').options[0].disabled = true;
     el('preset').addEventListener('change', e => {
@@ -58,6 +59,13 @@ export class Interface {
       }
     });
     this.syncSettings();
+  }
+
+  backFromSettings(event) {
+    if (event.key !== 'Escape' || this.view !== 'settings') return;
+    event.preventDefault();
+    this.show('menu');
+    el('settings').focus();
   }
 
   setSettings(changes) {

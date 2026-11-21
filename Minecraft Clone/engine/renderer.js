@@ -188,7 +188,7 @@ export class Renderer {
     }
   }
 
-  render(camera, tiles, settings, time, dimension, target, entities) {
+  render(camera, tiles, settings, time, dimension, target, entities, underwater = false) {
     const { gl, canvas, sky, voxel, line } = this;
     const ratio = Math.min(devicePixelRatio || 1, 2) * settings.scale;
     const width = Math.max(1, Math.floor(canvas.clientWidth*ratio));
@@ -206,7 +206,7 @@ export class Renderer {
     const sun = [Math.cos(phase) * 0.94, altitude * 0.94, 0.341];
     const lit = Math.min(1, Math.max(0, (altitude + .18) * 2.1));
     const daylight = dimension.daylight ?? lit;
-    const { horizon, zenith, fog, fogRange, stars, sun: sunlight } = atmosphere(dimension, settings, daylight);
+    const { horizon, zenith, fog, fogRange, stars, sun: sunlight } = atmosphere(dimension, settings, daylight, underwater);
     const tan = Math.tan(camera.fov * Math.PI / 360);
     gl.viewport(0, 0, width, height);
     gl.disable(gl.DEPTH_TEST);
@@ -224,7 +224,7 @@ export class Renderer {
     gl.uniform3fv(sky.sun, sun);
     gl.uniform2f(sky.scale, tan * aspect, tan);
     gl.uniform1f(sky.daylight, daylight);
-    gl.uniform1i(sky.clouds, settings.clouds && dimension.clouds !== false);
+    gl.uniform1i(sky.clouds, !underwater && settings.clouds && dimension.clouds !== false);
     gl.uniform1i(sky.stars, stars);
     gl.uniform1i(sky.sunlight, sunlight);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -270,12 +270,14 @@ export class Renderer {
     }
     gl.uniformMatrix3fv(voxel.rotation, false, identity);
     gl.enable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
     gl.depthMask(false);
     gl.uniform1f(voxel.alpha, .70);
     gl.uniform1i(voxel.waves, settings.water);
     water.sort((a,b) => b[1]-a[1]);
     for (const [tile] of water) draw(tile.mesh.liquid, tile.bounds[0], 0, tile.bounds[1]);
     gl.depthMask(true);
+    gl.enable(gl.CULL_FACE);
     if (target) {
       gl.useProgram(line.p);
       gl.uniformMatrix4fv(line.vp, false, vp);

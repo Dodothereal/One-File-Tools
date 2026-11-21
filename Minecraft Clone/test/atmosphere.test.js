@@ -5,6 +5,19 @@ import { dimensions } from '../world/dimensions.js';
 import { presets } from '../ui/settings.js';
 import { selectTiles } from '../engine/stream.js';
 
+test('submerged eyes use short blue fog without celestial features', () => {
+  for (const daylight of [0, .5, 1]) {
+    const water = atmosphere({}, presets.Low, daylight, true);
+    assert.deepEqual(water.horizon, water.fog);
+    assert.deepEqual(water.zenith, water.fog);
+    assert.deepEqual(water.fogRange, [0, 24]);
+    assert(water.fog[2] > water.fog[0]);
+    assert.equal(water.stars, false);
+    assert.equal(water.sun, false);
+  }
+  assert.deepEqual(atmosphere({}, presets.Low, 1, false), atmosphere({}, presets.Low, 1));
+});
+
 test('Nether sky and distant terrain share flat fog before ceiling LOD ends on every preset', () => {
   for (const settings of Object.values(presets)) {
     const nether = dimensions.get('nether');
