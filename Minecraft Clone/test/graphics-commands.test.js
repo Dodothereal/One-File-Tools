@@ -7,6 +7,21 @@ import { World, SIZE, HEIGHT, indexOf } from '../world/world.js';
 import { STONE } from '../world/blocks.js';
 import { meshChunk, meshTerrain } from '../engine/mesh.js';
 import { ChunkStream } from '../engine/stream.js';
+import { frameTime } from '../engine/frame-timing.js';
+
+test('60 FPS cap carries timing across 75 Hz callbacks and drops stale deadlines', () => {
+  let previous, frames = 0;
+  for (let i = 0; i < 150; i++) {
+    const next = frameTime(i * 1000 / 75, previous, 60);
+    if (next === undefined) continue;
+    previous = next;
+    frames++;
+  }
+  assert.equal(frames, 120);
+  assert.equal(frameTime(10_000, previous, 60), 10_000);
+  assert.equal(frameTime(10_008, 10_000, 60), undefined);
+  assert.equal(frameTime(10_008, 10_000, 0), 10_008);
+});
 
 test('presets set every quality option and custom detection preserves the base', () => {
   for (const [preset, values] of Object.entries(presets)) {

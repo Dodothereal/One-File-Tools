@@ -1,6 +1,7 @@
 import { createAtlas } from './engine/atlas.js';
 import { Renderer } from './engine/renderer.js';
 import { ChunkStream } from './engine/stream.js';
+import { frameTime } from './engine/frame-timing.js';
 import { raycast } from './engine/raycast.js';
 import { viewAxes } from './engine/math.js';
 import { AIR, blocks } from './world/blocks.js';
@@ -185,11 +186,12 @@ class Game {
   }
 
   frame(at) {
-    const limit = this.settings.fpsLimit;
-    if (limit && this.lastFrame !== undefined && at - this.lastFrame < 1000/limit - .5) {
+    const scheduled = frameTime(at, this.frameSchedule, this.settings.fpsLimit);
+    if (scheduled === undefined) {
       requestAnimationFrame(next => this.frame(next));
       return;
     }
+    this.frameSchedule = scheduled;
     const elapsed = this.lastFrame === undefined ? 0 : at - this.lastFrame;
     this.lastFrame = at;
     if (this.ui.view === 'play') {
