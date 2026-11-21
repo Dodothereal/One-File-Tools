@@ -37,7 +37,7 @@ const sandbox = {
   setInterval() { return 1; }, clearInterval() {}, requestAnimationFrame() {},
 };
 vm.createContext(sandbox);
-vm.runInContext(script.replace('      })();', 'globalThis.test={setPhase,resetExperience,beat,knock,scheduleWhisper,createAudio,get audio(){return audio},get shots(){return oneShots}};})();'), sandbox);
+vm.runInContext(script.replace('      })();', 'globalThis.test={setPhase,setFinale,resetExperience,beat,knock,scheduleWhisper,createAudio,get audio(){return audio},get shots(){return oneShots}};})();'), sandbox);
 const api = sandbox.test;
 const click = () => events['#sound-toggle:click']();
 const fire = ms => { for (const [key, timer] of [...timers]) if (timer.ms === ms) { timers.delete(key); timer.fn(); } };
@@ -93,6 +93,28 @@ const fire = ms => { for (const [key, timer] of [...timers]) if (timer.ms === ms
   api.resetExperience(); assert.equal(api.shots.size, 0);
   utterance.onerror({ error: 'synthesis-failed' }); assert.equal(api.shots.size, 0);
   console.log('PASS synthesis error plays one fallback; reset cleans it up and stale errors cannot restart it');
+  api.setPhase(5); api.setFinale(.35);
+  assert.equal(element('#finale').dataset.beat, '2');
+  api.setFinale(.6);
+  assert.deepEqual(api.audio.master.gain.ramp, [.0001, 10.2]);
+  assert.equal(api.shots.size, 0);
+  api.beat(); api.knock(5); api.scheduleWhisper(5); fire(2600);
+  assert.equal(api.shots.size, 0);
+  api.setFinale(.8);
+  assert.deepEqual(api.audio.master.gain.ramp, [.42, 10.2]);
+  assert.equal(api.shots.size, 2);
+  api.setFinale(.9); assert.equal(api.shots.size, 2);
+  api.setFinale(.6); assert.equal(api.shots.size, 0);
+  api.resetExperience();
+  assert.deepEqual(api.audio.master.gain.ramp, [.42, 10.2]);
+  console.log('PASS finale silence fades master, suppresses shots/whispers, restores one sting, and resets safely');
+  await click(); api.setPhase(5); api.setFinale(.6); api.setFinale(.8);
+  assert.equal(api.shots.size, 0);
+  await click();
+  api.setFinale(.6); sandbox.document.hidden = true; api.setFinale(.8);
+  assert.equal(api.shots.size, 0);
+  sandbox.document.hidden = false; api.resetExperience();
+  console.log('PASS muted and hidden finale transitions cannot play a sting');
   await click(); sandbox.window.AudioContext = undefined;
   delete sandbox.window.speechSynthesis;
   api.scheduleWhisper(3);

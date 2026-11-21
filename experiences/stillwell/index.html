@@ -44,16 +44,29 @@
       @media(max-height:480px){.header-inner{height:46px}.brand{font-size:25px}.brand-mark{width:23px;height:23px}.nav a:not(.nav-cta){display:none}.chapter-marker{top:58px;font-size:7px}.controls{left:10px;bottom:8px;padding:2px}.sound-toggle,.motion-toggle{padding:6px;font-size:8px}.final-kicker{top:66px;font-size:7px;letter-spacing:2px}.final-code{top:65px;font-size:7px;letter-spacing:1px}.final-face{height:82svh;top:41%}.final-caption{bottom:57px}.final-caption h2{font-size:38px;margin:5px 0 8px;letter-spacing:-1px}.final-caption>p{font-size:8px;letter-spacing:1px}.end-card{padding-top:65px;padding-bottom:90px;scroll-margin-top:55px}.end-card>p{margin:12px auto 14px}.end-card .button{scroll-margin-block:65px 65px}.end-foot{margin-top:45px}}
       .reduced-motion .final-portrait{transform:none}
 
+
+      .entity-defs{position:absolute;overflow:hidden}.forest-eyes{width:28px;height:65px;top:40%;left:59%}.presence{width:58px;height:46%;left:75%;top:11%;background:none;border-radius:0;filter:none}.presence:before{content:none}.door-eyes{width:35px;height:110px;top:102px;right:4px}
+      .hall-figure{transform-box:fill-box;transform-origin:50% 45%}
+      .final-entity{position:absolute;left:50%;top:24%;height:40%;width:40%;transform:translateX(-50%) scale(.7);opacity:.55;transition:transform .28s ease-out,opacity .28s ease-out}
+      .final-face{height:112svh;opacity:0;transform:translate(-50%,-50%) scale(1);transition:opacity .25s ease-out}
+      .finale[data-beat="2"] .final-entity{transform:translateX(-50%) scale(1.15);opacity:.9}
+      .finale[data-beat="3"] .final-entity{opacity:0}.finale[data-beat="3"] .final-face{opacity:1}
+      .finale[data-silence="true"] .final-entity{transition:none}
+      .registry{color:#dab49a!important}.escape kbd{margin-inline:6px;padding:2px 4px;border:1px solid #a57e6d66;border-radius:3px;font:9px monospace}
+      .reduced-motion .finale .final-entity{transform:translateX(-50%)}.reduced-motion .final-face{transform:translate(-50%,-50%)}
+      @media(max-height:480px){.final-face{height:100svh}.end-card .registry{font-size:10px}.escape kbd{display:none}}
+      @media(pointer:coarse){.escape kbd{display:none}}
     </style>
   </head>
   <body data-phase="0">
+    <svg class="entity-defs" width="0" height="0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="entity-face-clip"><ellipse cx="601" cy="364" rx="18" ry="27"/></clipPath><symbol id="stillwell-presence" viewBox="550 325 100 190"><ellipse cx="601" cy="510" rx="28" ry="6" fill="#000" opacity=".6"/><path d="M587 390Q570 399 568 435L561 490L570 492L583 447L582 510H598L602 466L608 510H623L619 445L632 489L641 484L629 422Q625 396 612 391Z" fill="#252a22" stroke="#796c58" stroke-width=".6"/><path d="M589 390L590 378H611L612 392Q600 403 589 390Z" fill="#3b3c2e"/><image href="./assets/presence.jpg" x="583" y="337" width="36" height="54" preserveAspectRatio="xMidYMid slice" clip-path="url(#entity-face-clip)"/></symbol></defs></svg>
     <div class="reading-line" aria-hidden="true"></div>
     <div class="topline">A little less noise. A little more you. <span>✳</span> Welcome to Stillwell.</div>
     <header class="site-header">
       <div class="wrap header-inner">
         <a class="brand" href="#home" aria-label="Stillwell home"><svg class="brand-mark" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M18 3v30M3 18h30M7.4 7.4l21.2 21.2M7.4 28.6L28.6 7.4" stroke="currentColor" stroke-width="1.3"/><circle cx="18" cy="18" r="8.5" fill="currentColor"/><circle cx="18" cy="18" r="3.5" fill="#f5f3eb"/></svg>stillwell<span style="font:10px var(--font);align-self:flex-start;margin-top:3px;letter-spacing:0">®</span></a>
         <nav class="nav" aria-label="Main navigation"><a href="#feeling">The feeling</a><a href="#practice">The practice</a><a href="#place">Your place</a><a class="nav-cta" href="#feeling">Find your stillness <span>↗</span></a></nav>
-        <button class="escape" type="button" data-reset>Return to calm ↗</button>
+        <button class="escape" type="button" data-reset aria-keyshortcuts="Escape">Return to calm <kbd>Esc</kbd> ↗</button>
       </div>
     </header>
     <noscript><p class="no-script">JavaScript brings this experience to life, including its optional soundscape. You can still explore the page below.</p></noscript>
@@ -63,20 +76,20 @@
           <div class="hero-copy"><p class="eyebrow">A quieter kind of living</p><h1 class="serif">Come back<br />to <em>yourself.</em></h1><p class="hero-desc">Thoughtful spaces. Simple rituals. A little room to breathe. Discover a way of living that feels a little more like you.</p><div class="hero-actions"><a class="button" href="#feeling">Find your stillness <span class="arrow">↗</span></a><a class="text-link" href="#practice">Our philosophy <span>↘</span></a></div></div>
           <div class="hero-image"><img src="./assets/interior.jpg" alt="A sunlit living room with natural wood, soft textures, and thoughtful greenery" fetchpriority="high" /><div class="image-stamp"><span>ROOM TO JUST BE.</span><span class="stamp-icon">✳</span></div></div>
         </div>
-        <div class="hero-foot"><div class="people"><div class="avatars" aria-hidden="true"><i class="avatar"></i><i class="avatar"></i><i class="avatar"></i></div><span>12,000 people feeling more at home.</span></div><a class="scroll-cue" href="#feeling">A little more below <b>↓</b></a></div>
+        <div class="hero-foot"><div class="people"><div class="avatars" aria-hidden="true"><i class="avatar"></i><i class="avatar"></i><i class="avatar"></i></div><span>12,000 residents feeling more at home.</span></div><a class="scroll-cue" href="#feeling">A little more below <b>↓</b></a></div>
         <div class="featured" aria-label="Our world, thoughtfully considered"><span class="eyebrow">Good company. Better living.</span><span class="press">the gentlewoman</span><span class="press">Kinfolk</span><span class="press">CEREAL</span><span class="press">These Four Walls</span></div>
       </section>
       <section class="feeling wrap" id="feeling" data-chapter="1">
         <p class="eyebrow">01 — The feeling</p><div class="section-heading"><h2 class="serif">Life is loud.<br />Your space shouldn’t be.</h2><p>Less of what gets in the way.<br />More of what makes you feel whole.<br />It starts with the smallest things.</p></div>
         <div class="feature-grid">
-          <article class="feature-card"><div class="feature-picture"><img src="./assets/forest.jpg" alt="Soft sunlight falling through a quiet, green forest" loading="lazy" /><div class="forest-eyes" aria-hidden="true"><i></i><i></i></div></div><div class="feature-caption"><h3>Breathe a little deeper.</h3><span>01</span></div><p>Let the outside in. There’s a natural rhythm to everything. We’ll help you find yours.</p></article>
+          <article class="feature-card"><div class="feature-picture"><img src="./assets/forest.jpg" alt="Soft sunlight falling through a quiet, green forest" loading="lazy" /><svg class="forest-eyes" viewBox="550 325 100 190" aria-hidden="true"><use href="#stillwell-presence" x="550" y="325" width="100" height="190"/></svg></div><div class="feature-caption"><h3>Breathe a little deeper.</h3><span>01</span></div><p>Let the outside in. There’s a natural rhythm to everything. We’ll help you find yours.</p></article>
           <article class="feature-card"><div class="feature-picture sunlight" role="img" aria-label="Warm afternoon sunlight on a simple ceramic vase"><i class="branch"></i></div><div class="feature-caption"><h3>Make room for less.</h3><span>02</span></div><p>Beautiful essentials. Nothing more, nothing less. A space that asks nothing of you.</p></article>
           <article class="feature-card"><div class="feature-picture room"><img src="./assets/interior.jpg" alt="A welcoming corner of a calm and comfortable home" loading="lazy" /></div><div class="feature-caption"><h3>Feel less alone.</h3><span>03</span></div><p>A comforting presence. An unspoken understanding. The feeling that something is always there.</p></article>
         </div>
       </section>
-      <section class="ritual" id="practice" data-chapter="2"><div class="wrap ritual-grid"><div class="ritual-art"><img src="./assets/interior.jpg" alt="A familiar room, dimmer now, with a shape in the far corner" loading="lazy" /><span class="presence" aria-hidden="true"></span><p class="ritual-note">Same space. A different feeling.</p></div><div class="ritual-copy"><p class="eyebrow">02 — The practice</p><h2 class="serif">The comfort<br />of a <em>familiar</em><br />presence.</h2><p>Your home should know you. The way you move. The hours you keep. The little things you do when you think nobody is watching.</p><div class="ritual-list"><div class="ritual-item"><span>01</span><span>A space that learns your rhythm.</span></div><div class="ritual-item"><span>02</span><span>Quiet, even when you’re not alone.</span></div><div class="ritual-item"><span>03</span><span class="secret">You did lock the door. Didn’t you?</span></div></div></div></div></section>
-      <section class="testimony wrap" data-chapter="2"><p class="rating" aria-label="Five stars">✶ ✶ ✶ ✶ ✶</p><blockquote>“I haven’t felt like myself in years.<br /><em class="incorrect">That’s the beautiful thing.</em>”</blockquote><p class="attribution">Eleanor M. — A Stillwell resident</p><p class="verified">Verified resident · Since 1996 · Still here</p><div class="testimonial-dots" aria-hidden="true"><i></i><i></i><i></i></div></section>
-      <section class="belonging" id="place" data-chapter="3"><div class="wrap"><div class="belong-grid"><div><p class="eyebrow">03 — Your place</p><h2 class="serif">Some things<br /><em>settle in.</em></h2><p>First, the feeling that you’ve been here before. Then, the sound from the room you don’t use. A home is a living thing.<br /><br />Ours has been waiting for you.</p><a class="text-link" href="#signal">Make yourself at home <span>↓</span></a></div><div class="door-panel" role="img" aria-label="A green door stands slightly ajar. Two faint eyes watch from the darkness behind it."><div class="door-wall"></div><div class="door-frame"><div class="door-eyes"><i></i><i></i></div><div class="door"><span class="door-number">006</span></div></div><div class="door-shadow"></div><div class="door-label"><span>OCCUPANCY: 01</span><span id="occupancy">OCCUPANCY: 02</span></div></div></div><div class="odd-label"><span>YOU ARE EXACTLY WHERE YOU SHOULD BE.</span><span>PLEASE DO NOT COUNT THE DOORS.</span></div></div></section>
+      <section class="ritual" id="practice" data-chapter="2"><div class="wrap ritual-grid"><div class="ritual-art"><img src="./assets/interior.jpg" alt="A familiar room, dimmer now, with a shape in the far corner" loading="lazy" /><svg class="presence" viewBox="550 325 100 190" aria-hidden="true"><use href="#stillwell-presence" x="550" y="325" width="100" height="190"/></svg><p class="ritual-note">Same space. A different feeling.</p></div><div class="ritual-copy"><p class="eyebrow">02 — The practice</p><h2 class="serif">The comfort<br />of a <em>familiar</em><br />presence.</h2><p>Your home should know you. The way you move. The hours you keep. The little things you do when you think nobody is watching.</p><div class="ritual-list"><div class="ritual-item"><span>01</span><span>A space that learns your rhythm.</span></div><div class="ritual-item"><span>02</span><span>Quiet, even when you’re not alone.</span></div><div class="ritual-item"><span>03</span><span class="secret">You did lock the door. Didn’t you?</span></div></div></div></div></section>
+      <section class="testimony wrap" data-chapter="2"><p class="rating" aria-label="Five stars">✶ ✶ ✶ ✶ ✶</p><blockquote>“I haven’t felt like myself in years.<br /><em class="incorrect">That’s the beautiful thing.</em>”</blockquote><p class="attribution">Eleanor M. — Room 006</p><p class="verified">Resident 12,000 · Since 1996 · Still here</p><div class="testimonial-dots" aria-hidden="true"><i></i><i></i><i></i></div></section>
+      <section class="belonging" id="place" data-chapter="3"><div class="wrap"><div class="belong-grid"><div><p class="eyebrow">03 — Your place</p><h2 class="serif">Some things<br /><em>settle in.</em></h2><p>First, the feeling that you’ve been here before. Then, the sound from the room you don’t use. A home is a living thing.<br /><br />Ours has been waiting for you.</p><a class="text-link" href="#signal">Make yourself at home <span>↓</span></a></div><div class="door-panel" role="img" aria-label="A green door stands slightly ajar. Two faint eyes watch from the darkness behind it."><div class="door-wall"></div><div class="door-frame"><svg class="door-eyes" viewBox="550 325 100 190" aria-hidden="true"><use href="#stillwell-presence" x="550" y="325" width="100" height="190"/></svg><div class="door"><span class="door-number">006</span></div></div><div class="door-shadow"></div><div class="door-label"><span>OCCUPANCY: 01</span><span id="occupancy">OCCUPANCY: 02</span></div></div></div><div class="odd-label"><span>YOU ARE EXACTLY WHERE YOU SHOULD BE.</span><span>PLEASE DO NOT COUNT THE DOORS.</span></div></div></section>
       <section class="breach" id="signal" data-chapter="3"><div class="wrap"><p class="signal-line">STILLWELL RESIDENT SERVICES / SIGNAL INTERRUPTED</p><h2 class="serif">We know what<br /><em>you’re looking for.</em></h2><div class="breach-message"><p>It isn’t peace.<br />It’s the moment the house goes silent.<br />The moment you realize the breathing hasn’t stopped.</p><div class="signal-meter" aria-hidden="true"><i style="--h:12px;--d:0s"></i><i style="--h:26px;--d:.3s"></i><i style="--h:18px;--d:.1s"></i><i style="--h:38px;--d:.5s"></i><i style="--h:24px;--d:.2s"></i><i style="--h:31px;--d:.7s"></i><i style="--h:13px;--d:.4s"></i><i style="--h:20px;--d:.1s"></i><i style="--h:9px;--d:.8s"></i></div></div><div class="corrupted-rule"></div><div class="transmission"><span>LAST RESIDENT CHECK-IN<br />03:33:33 / DATE NOT FOUND</span><span>THEY ARE NOT TESTIMONIALS.<br />THEY ARE MISSING PERSONS.</span></div></div></section>
       <section class="warning" data-chapter="4"><p class="eyebrow">This is not part of the website.</p><h2>If you can still read this,<br /><span class="redacted">there is time to leave.</span></h2><p>I TRIED TO REMOVE THE PAGE.<br />IT KEPT ADDING ROOMS.</p><a class="down" href="#descent" aria-label="Continue into the corridor">↓</a></section>
       <section class="descent" id="descent" data-chapter="4" aria-label="An impossible corridor grows closer as you scroll">
@@ -92,18 +105,18 @@
             <g opacity=".14" filter="url(#wall-grain)"><path d="M0 0L520 280V510L0 800Z" fill="#9a9379"/><path d="M1200 0L680 280V510L1200 800Z" fill="#8c806a"/></g>
             <g stroke="#10150e" stroke-width="1.6" fill="none"><path d="M280 161L291 242L270 271L283 304L266 361M911 198L897 267L909 294L883 335L889 358M142 629L161 587L153 535M1042 596L1029 546L1046 500M433 323L440 356L433 399"/></g>
             <ellipse cx="600" cy="315" rx="320" ry="250" fill="url(#hall-glow)"/><path d="M600 0V165" stroke="#100f0b" stroke-width="3"/><path d="M580 178Q582 159 600 160Q619 159 621 178Z" fill="#403d2e"/><ellipse cx="600" cy="180" rx="22" ry="5" fill="#b4a66b"/><ellipse cx="600" cy="181" rx="13" ry="3" fill="#dbcc8b"/>
-            <g class="hall-figure"><ellipse cx="601" cy="510" rx="28" ry="6" fill="#000" opacity=".6"/><path d="M587 390Q570 399 568 435L561 490L570 492L583 447L582 510H598L602 466L608 510H623L619 445L632 489L641 484L629 422Q625 396 612 391Z" fill="#080d08"/><path d="M589 390L590 378H611L612 392Q600 403 589 390Z" fill="#3b3c2e"/><ellipse cx="601" cy="364" rx="18" ry="27" fill="url(#figure-skin)"/><path d="M585 355Q600 331 617 353L618 345Q603 325 585 342Z" fill="#070b07"/><ellipse cx="594" cy="363" rx="4.7" ry="5" fill="#010301"/><ellipse cx="609" cy="363" rx="4.8" ry="5.1" fill="#010301"/><circle cx="594" cy="363" r=".8" fill="#e7e0c0"/><circle cx="609" cy="363" r=".8" fill="#e7e0c0"/><path d="M594 378Q601 382 608 376" fill="none" stroke="#0a0b07" stroke-width="2"/></g>
+            <svg class="hall-figure" x="550" y="325" width="100" height="190" viewBox="550 325 100 190"><use href="#stillwell-presence" x="550" y="325" width="100" height="190"/></svg>
             <path d="M0 800L520 510H680L1200 800" fill="none" stroke="#83735a" stroke-width="1" opacity=".12"/>
           </svg>
         </div><div class="hall-red"></div><div class="hall-overlay"></div><p class="hall-coordinates">STILLWELL / LOWER LEVEL<br /><span id="hall-depth">DEPTH: 006</span></p><p class="hall-rec">LIVE FEED</p><span class="whisper" style="--x:8%;--y:36%;--r:-8deg">we kept your room</span><span class="whisper" style="--x:78%;--y:49%;--r:5deg">don’t turn around</span><span class="whisper" style="--x:14%;--y:63%;--r:-3deg">it knows your footsteps</span><div class="hall-text"><p class="eyebrow" id="hall-kicker">There is no outside from here.</p><h2 id="hall-heading">You were never<br /><em>alone.</em></h2><p id="hall-subtitle">KEEP SCROLLING. IT GETS CLOSER.</p></div></div>
       </section>
       <section class="threshold" data-chapter="5"><h2>That isn’t your shadow.</h2><p>AND IT HAS STOPPED FOLLOWING YOU.</p></section>
       <section class="finale" id="finale" data-chapter="5" aria-label="The presence reveals itself">
-        <div class="final-sticky"><div class="final-face" aria-hidden="true">
+        <div class="final-sticky"><svg class="final-entity" viewBox="550 325 100 190" aria-hidden="true"><use href="#stillwell-presence" x="550" y="325" width="100" height="190"/></svg><div class="final-face" aria-hidden="true">
           <img class="final-portrait" src="./assets/presence.jpg" alt="" loading="lazy" />
-        </div><div class="final-light"></div><div class="final-scratch"></div><p class="final-code">RESIDENT 12,001</p><p class="final-code right">CHECK-IN COMPLETE</p><p class="final-kicker eyebrow" id="final-kicker">We saved a place for you.</p><div class="final-caption"><h2 id="final-heading">You are home.</h2><p id="final-subtitle">THERE IS NOTHING LEFT TO SCROLL AWAY FROM.</p></div></div>
+        </div><div class="final-light"></div><div class="final-scratch"></div><p class="final-code" id="resident-count">RESIDENTS: 12,000</p><p class="final-code right">CHECK-IN COMPLETE</p><p class="final-kicker eyebrow" id="final-kicker">We saved a place for you.</p><div class="final-caption"><h2 id="final-heading">You are home.</h2><p id="final-subtitle">THERE IS NOTHING LEFT TO SCROLL AWAY FROM.</p></div></div>
       </section>
-      <section class="end-card" data-chapter="5"><p class="brand">still here.</p><p>Every home has a story.<br />You’re part of ours now.</p><button type="button" class="button" data-reset>Let me start over <span>↗</span></button><div class="wrap end-foot"><span>STILLWELL® · A FICTIONAL EXPERIENCE</span><a href="https://app.devin.ai/sessions/0b958f0cb2e04c918192dbff67c068ce" target="_blank" rel="noopener">Request changes ↗</a><span>NO ONE IS ACTUALLY WATCHING YOU.</span></div></section>
+      <section class="end-card" data-chapter="5"><p class="brand">still here.</p><p>“I kept the room warm for you.”<br />— Eleanor M., former resident of Room 006</p><p class="registry">Room 006 — Resident 12,001: <strong>you</strong></p><button type="button" class="button" data-reset>Let me start over <span>↗</span></button><div class="wrap end-foot"><span>STILLWELL® · A FICTIONAL EXPERIENCE</span><a href="https://app.devin.ai/sessions/0b958f0cb2e04c918192dbff67c068ce" target="_blank" rel="noopener">Request changes ↗</a><span>NO ONE IS ACTUALLY WATCHING YOU.</span></div></section>
     </main>
     <div class="vignette" aria-hidden="true"></div><div class="atmosphere" aria-hidden="true"></div>
     <div class="controls" aria-label="Experience controls"><button type="button" class="sound-toggle" id="sound-toggle" aria-pressed="false" aria-label="Enable atmospheric sound"><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span><span id="sound-label">Sound off · enter the atmosphere</span></button><span class="controls-divider" aria-hidden="true"></span><button type="button" class="motion-toggle" id="motion-toggle" aria-pressed="false">Reduce motion</button></div>
@@ -125,6 +138,8 @@
         let motionOverride = null;
         let reducedMotion = motionPreference.matches;
         let phase = -1;
+        let finaleBeat = 0;
+        let finaleSilent = false;
         let framePending = false;
         let resetting = false;
         let audioEnabled = false;
@@ -168,6 +183,7 @@
           if (phase===next) return;
           const previous=phase;
           phase=next;
+          if(next!==5)setFinale(0,false);
           stopOneShots(next);
           if(whisperPhase!==null && next<whisperPhase)cancelWhisper();
           body.dataset.phase=String(phase);
@@ -194,7 +210,7 @@
           writeStyle(body,'--decay',decay.toFixed(3));
           writeStyle(bar,'transform',`scaleX(${clamp(y/Math.max(total,1)).toFixed(3)})`);
           writeStyle(hall,'--hall',hallProgress.toFixed(3));
-          writeStyle(finale,'--ending',finalProgress.toFixed(3));
+          setFinale(finalProgress,phase===5);
           const step=hallProgress>.72?2:hallProgress>.32?1:0;
           if(step!==sceneStep){
             sceneStep=step;
@@ -204,9 +220,27 @@
             document.querySelectorAll('.whisper').forEach((el,index)=>el.classList.toggle('visible',step>=index));
           }
           writeText('#hall-depth',`DEPTH: ${String(6+Math.floor(hallProgress*660)).padStart(3,'0')}`);
-          writeText('#final-heading',finalProgress>.75?'Don’t leave.':'You are home.');
-          writeText('#final-kicker',finalProgress>.75?'It gets lonely in here.':'We saved a place for you.');
-          writeText('#final-subtitle',finalProgress>.75?'WE CAN DO THIS AGAIN. AND AGAIN. AND AGAIN.':'THERE IS NOTHING LEFT TO SCROLL AWAY FROM.');
+        }
+        function setFinale(progress,active=true) {
+          const next=active?(progress<.3?1:progress<.72?2:3):0;
+          const silent=active&&progress>=.55&&progress<.72;
+          const previous=finaleBeat;
+          const silenceChanged=silent!==finaleSilent;
+          if(next===previous&&!silenceChanged)return;
+          finaleBeat=next;finaleSilent=silent;
+          finale.dataset.beat=String(next);
+          finale.dataset.silence=String(silent);
+          if(silent){cancelWhisper();stopOneShots();}
+          if(silenceChanged)tuneSound();
+          if(next>previous&&next>=2&&audio&&audioEnabled&&!document.hidden){
+            const t=audio.ctx.currentTime;
+            pulse(next===3?220:160,.16,t+.06,.45,'triangle');
+            pulse(next===3?880:440,.055,t+.06,.2,'sine');
+          }
+          writeText('#resident-count',next===3?'RESIDENTS: 12,001':'RESIDENTS: 12,000');
+          writeText('#final-heading',next===3?'You are home.':silent?'Hold your breath.':next===2?'It knows your room.':'Someone is waiting.');
+          writeText('#final-kicker',next===3?'Eleanor saved a place for you.':silent?'Not a sound. Not a step.':'Room 006 / Eleanor M. / Still occupied');
+          writeText('#final-subtitle',next===3?'ROOM 006 — RESIDENT 12,001: YOU':silent?'THE ROOM IS LISTENING.':'12,000 RESIDENTS. ONE ROOM LEFT TO FILL.');
         }
         function requestRender(){if(!framePending){framePending=true;requestAnimationFrame(render);}}
         window.addEventListener('scroll',requestRender,{passive:true});
@@ -260,7 +294,7 @@
         }
         function tuneSound(){
           if(!audio)return;
-          if(audioEnabled&&!document.hidden){hold(audio.master.gain,audio.ctx.currentTime);audio.master.gain.linearRampToValueAtTime(.42,audio.ctx.currentTime+.2);}
+          if(audioEnabled&&!document.hidden){hold(audio.master.gain,audio.ctx.currentTime);audio.master.gain.linearRampToValueAtTime(finaleSilent?.0001:.42,audio.ctx.currentTime+.2);}
           ramp(audio.calm.gain,phase<2?.19:phase===2?.09:0,.9);
           ramp(audio.drone.gain,[0,.015,.07,.15,.23,.29][Math.max(phase,0)],.9);
           ramp(audio.air.gain,[.09,.11,.14,.2,.26,.31][Math.max(phase,0)],.9);
@@ -269,20 +303,20 @@
           ramp(audio.breath.frequency,phase<3?.16:.24+phase*.045,1);
         }
         function pulse(frequency,volume,when,length=.3,type='sine'){
-          if(!audio||!audioEnabled||document.hidden)return;
+          if(!audio||!audioEnabled||document.hidden||finaleSilent)return;
           const ctx=audio.ctx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type;osc.frequency.setValueAtTime(frequency,when);osc.frequency.exponentialRampToValueAtTime(Math.max(20,frequency*.43),when+length);gain.gain.setValueAtTime(.0001,when);gain.gain.exponentialRampToValueAtTime(volume,when+.018);gain.gain.exponentialRampToValueAtTime(.0001,when+length);osc.connect(gain);gain.connect(audio.master);osc.start(when);osc.stop(when+length+.02);
           const shot={osc,gain,phase};oneShots.add(shot);
           osc.onended=()=>{osc.disconnect();gain.disconnect();oneShots.delete(shot);};
         }
         function beat(){
-          if(!audio||!audioEnabled||document.hidden||phase<2)return;
+          if(!audio||!audioEnabled||document.hidden||phase<2||finaleSilent)return;
           const t=audio.ctx.currentTime;const interval=phase===2?2:phase===3?1.5:phase===4?1.05:.76;
           if(t-lastBeat<interval)return;lastBeat=t;
           pulse(70,.13,t,.22);pulse(56,.09,t+.21,.24);
         }
         function knock(level){if(!audio||!audioEnabled)return;const t=audio.ctx.currentTime;for(let i=0;i<3;i++)pulse(150-level*10,.1,t+i*.42,.12,'triangle');}
         function whisperBurst(level,version){
-          if(!audio||!audioEnabled||document.hidden||phase!==level||whisperVersion!==version)return;
+          if(!audio||!audioEnabled||document.hidden||finaleSilent||phase!==level||whisperVersion!==version)return;
           const ctx=audio.ctx;const t=ctx.currentTime;const osc=ctx.createBufferSource();const filter=ctx.createBiquadFilter();const gain=ctx.createGain();
           const buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*1.4),ctx.sampleRate);const data=buffer.getChannelData(0);
           for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
@@ -296,12 +330,12 @@
         }
         function scheduleWhisper(level){
           cancelWhisper();
-          if(!audioEnabled||level<3)return;
+          if(!audioEnabled||level<3||finaleSilent)return;
           whisperPhase=level;
           const version=whisperVersion;
           if(document.hidden){hiddenWhisper=true;return;}
           whisperTimer=setTimeout(()=>{
-            if(!audioEnabled||document.hidden||phase!==level)return;
+            if(!audioEnabled||document.hidden||finaleSilent||phase!==level)return;
             if(!('speechSynthesis' in window)||!window.speechSynthesis.getVoices().length){whisperBurst(level,version);return;}
             const phrases={3:'We have been waiting.',4:'You are not alone.',5:'Welcome home.'};
             const utterance=new SpeechSynthesisUtterance(phrases[level]);
@@ -341,7 +375,7 @@
         document.querySelectorAll('[data-reset]').forEach(button=>button.addEventListener('click',resetExperience));
         document.addEventListener('keydown',(event)=>{if(event.key==='Escape'&&phase>=3)resetExperience();});
         document.addEventListener('pointermove',(event)=>{
-          if(reducedMotion||phase!==5)return;
+          if(reducedMotion||phase!==5||finaleSilent||finaleBeat!==3)return;
           const portrait=$('.final-portrait');
           const x=clamp(event.clientX/window.innerWidth)*8-4;
           const y=clamp(event.clientY/window.innerHeight)*5-2.5;
