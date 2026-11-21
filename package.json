@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.js",
+    "build:stillwell": "node scripts/build-stillwell-standalone.js",
     "themes": "node scripts/theme-gen.js",
     "sort": "node scripts/sort-norm.js data/tools.json && node scripts/sort-norm.js data/themes.json && node scripts/sort-norm.js data/quests.json",
     "sync-readme": "node scripts/sync-readme.js",

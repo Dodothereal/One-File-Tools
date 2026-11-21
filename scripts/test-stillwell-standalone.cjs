@@ -1,0 +1,27 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { buildHtml, inlineAsset, inlineCss } = require('./build-stillwell-standalone');
+
+const directory = path.resolve(__dirname, '../experiences/stillwell');
+const source = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
+const result = buildHtml(source);
+assert.equal(result, fs.readFileSync(path.join(directory, 'stillwell-standalone.html'), 'utf8'));
+assert.equal(result, buildHtml(source));
+assert.match(result, /data:font\/woff2;base64,d09GMg/);
+assert.match(result, /data:image\/jpeg;base64,/);
+assert.match(result, /data:image\/svg\+xml;base64,/);
+assert.doesNotMatch(result, /<link[^>]+(?:manifest|preconnect|stylesheet)/);
+const withoutAnchorsAndNamespaces = result.replace(/<a\b[^>]*>/gi, '').replace(/xmlns="[^"]*"/g, '').replace(/http%3A[^%]*%2F/gi, '');
+assert.doesNotMatch(withoutAnchorsAndNamespaces, /https?:\/\//);
+assert.equal(inlineAsset('', directory), '');
+assert.equal(inlineAsset('#entity-body', directory), '#entity-body');
+assert.equal(inlineCss('a{background:url("data:image/png;base64,AA==")}', directory), 'a{background:url("data:image/png;base64,AA==")}');
+assert.equal(buildHtml(''), '');
+assert.match(inlineCss('a{background:url(./assets/icon.svg)}', directory), /data:image\/svg\+xml;base64,/);
+assert.throws(() => inlineAsset('./assets/missing.png', directory), /ENOENT/);
+assert.throws(() => inlineAsset('https://example.com/image.png', directory), /External resource/);
+assert.throws(() => inlineAsset('./assets/file.exe', directory), /Unsupported asset/);
+assert.throws(() => buildHtml('<link rel="stylesheet" href="other.css">'), /Unsupported stylesheet/);
+console.log('PASS deterministic standalone output embeds images, icons and WOFF2 fonts; no external resources');
+console.log('PASS empty inputs, existing data/fragment URLs, CSS images and missing/remote/unsupported asset errors');
