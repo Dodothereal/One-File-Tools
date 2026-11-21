@@ -38,7 +38,7 @@ class Game {
       if (!id) return "Open the flight hangar with J, or launch with /jet kestrel, /jet wraith, or /jet eventide.";
       if (id === "return") return game.ejectJet() ? "Returned to the launch point." : "You are not piloting a jet.";
       return game.launchJet(id) ?? `${jets[id].name} ready. Resume to take control.`;
-    });
+    }, args => args.length ? [] : [...Object.keys(jets), 'return']);
     this.enterDimension(dimensions.get('overworld'));
     this.ui = new Interface(this, atlas);
     this.bindInput();

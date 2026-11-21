@@ -3,14 +3,19 @@ export class CommandRegistry {
     this.commands = new Map();
   }
 
-  register(name, usage, description, run) {
-    this.commands.set(name, { usage, description, run });
+  register(name, usage, description, run, complete = () => []) {
+    this.commands.set(name, { usage, description, run, complete });
   }
 
   complete(input) {
-    const prefix = input.trim().replace(/^\//, '').toLowerCase();
-    if (/\s/.test(prefix)) return [];
-    return [...this.commands.keys()].filter(name => name.startsWith(prefix)).map(name => '/' + name);
+    const [name, ...args] = input.trimStart().replace(/^\//, '').split(/\s+/);
+    if (!args.length) return [...this.commands.keys()].filter(key => key.startsWith(name.toLowerCase())).map(key => '/' + key);
+    const command = this.commands.get(name.toLowerCase());
+    if (!command) return [];
+    const prefix = args.at(-1).toLowerCase();
+    const previous = args.slice(0, -1);
+    return command.complete(previous).filter(value => value.toLowerCase().startsWith(prefix))
+      .map(value => '/' + [name.toLowerCase(), ...previous, value].join(' '));
   }
 
   execute(input, context) {
