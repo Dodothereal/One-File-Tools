@@ -25,6 +25,7 @@ Open http://localhost:3000. This is a static production site; no build is needed
 - Interior photograph: https://unsplash.com/photos/1600210492486-724fe5c67fb0 (image CDN ID `photo-1600210492486-724fe5c67fb0`).
 - Forest photograph: https://unsplash.com/photos/1441974231531-c6227db76b6e (image CDN ID `photo-1441974231531-c6227db76b6e`).
 - Fonts: DM Sans and Instrument Serif, via Google Fonts; system fallbacks are provided.
-- Corridor, figure, final face, and app icon are original SVG/CSS artwork.
+- Finale portrait: [Conrad Veidt as Gwynplaine in The Man Who Laughs (1928)](https://commons.wikimedia.org/wiki/File:The_Man_Who_Laughs_-_Conrad_Veidt_as_Gwynplaine.jpg), public domain, cropped and color-graded for this experience.
+- Corridor, figure, and app icon are original SVG/CSS artwork.
 
 No service worker is registered; the authenticated app proxy does not support them.
