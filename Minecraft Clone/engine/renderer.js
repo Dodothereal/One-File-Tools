@@ -1,6 +1,17 @@
 import { COLS, TILE } from './atlas.js';
 import { viewProjection, visible } from './math.js';
 
+const grading = `
+uniform bool post;
+uniform vec2 viewport;
+vec3 grade(vec3 rgb) {
+  if (!post) return rgb;
+  rgb += max(rgb - .65, 0.) * .14;
+  rgb = rgb * 1.55 / (rgb + .65);
+  vec2 screen = gl_FragCoord.xy / viewport - .5;
+  return rgb * (1. - .38 * dot(screen,screen));
+}`;
+
 const skyVertex = `#version 300 es
 out vec2 point;
 void main() {
@@ -16,6 +27,7 @@ uniform vec3 forward, right, up, eye, horizon, zenith, sun;
 uniform vec2 scale;
 uniform float daylight;
 uniform bool clouds;
+${grading}
 float random(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float noise(vec2 p) {
   vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
@@ -39,7 +51,7 @@ void main() {
     float cover = noise(p)*.7 + noise(p*2.3)*.3;
     if (cover > .62) rgb = mix(rgb,vec3(.83,.89,.92)*(.27+daylight*.73),smoothstep(.055,.35,ray.y)*.83);
   }
-  color = vec4(rgb,1.);
+  color = vec4(grade(rgb),1.);
 }`;
 
 const voxelVertex = `#version 300 es
@@ -48,12 +60,16 @@ layout(location=1) in vec4 material;
 uniform mat4 vp;
 uniform vec3 offset;
 uniform vec2 rotation;
+uniform bool waves;
+uniform float clock;
+uniform vec3 eye;
 out vec2 uv;
 out float shade, fogDepth;
 flat out float tile;
 void main() {
   vec3 p = vec3(position.x*rotation.x + position.z*rotation.y, position.y,
                 position.z*rotation.x - position.x*rotation.y) + offset;
+  if (waves) p.y += sin((p.x+eye.x)*.42+clock*1.7)*.055 + cos((p.z+eye.z)*.35+clock)*.045;
   gl_Position = vp * vec4(p,1.);
   fogDepth = length(p);
   uv = material.xy;
@@ -70,14 +86,18 @@ uniform sampler2D atlas;
 uniform vec3 horizon;
 uniform vec2 fog;
 uniform float daylight, alpha;
+uniform bool highFog, waves;
+uniform float clock;
+${grading}
 out vec4 color;
 void main() {
   vec2 texel = vec2(mod(tile,${COLS}.),floor(tile/${COLS}.))*${TILE}. + clamp(uv*${TILE}., .5, ${TILE - 0.5});
   vec3 base = texture(atlas,texel/vec2(textureSize(atlas,0))).rgb;
   vec3 light = mix(vec3(.27,.36,.55),vec3(1.05,1.03,.96),daylight);
   vec3 lit = base * shade * light;
-  float haze = smoothstep(fog.x,fog.y,fogDepth);
-  color = vec4(mix(lit,horizon,haze),alpha);
+  if (waves) lit += vec3(.35,.45,.5) * pow(max(0.,sin(uv.x*12.+clock)*cos(uv.y*11.-clock)),16.) * daylight;
+  float haze = highFog ? smoothstep(fog.x,fog.y,fogDepth) : clamp((fogDepth-fog.x)/(fog.y-fog.x),0.,1.);
+  color = vec4(grade(mix(lit,horizon,haze)),alpha);
 }`;
 
 const lineVertex = `#version 300 es
@@ -125,8 +145,8 @@ export class Renderer {
     if (!gl) throw new Error('This world needs WebGL 2. Try a current browser with hardware acceleration on.');
     this.gl = gl;
     this.canvas = canvas;
-    this.sky = program(gl, skyVertex, skyFragment, ['forward','right','up','eye','horizon','zenith','sun','scale','daylight','clouds']);
-    this.voxel = program(gl, voxelVertex, voxelFragment, ['vp','offset','rotation','atlas','horizon','fog','daylight','alpha']);
+    this.sky = program(gl, skyVertex, skyFragment, ['forward','right','up','eye','horizon','zenith','sun','scale','daylight','clouds','post','viewport']);
+    this.voxel = program(gl, voxelVertex, voxelFragment, ['vp','offset','rotation','atlas','horizon','fog','daylight','alpha','post','viewport','highFog','waves','clock','eye']);
     this.line = program(gl, lineVertex, lineFragment, ['vp','offset']);
     this.edges = this.buffer(boxLines(), 3);
     this.atlas = gl.createTexture();
@@ -194,6 +214,8 @@ export class Renderer {
     gl.disable(gl.CULL_FACE);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(sky.p);
+    gl.uniform1i(sky.post, settings.post);
+    gl.uniform2f(sky.viewport, width, height);
     gl.uniform3fv(sky.forward, camera.forward);
     gl.uniform3fv(sky.right, camera.right);
     gl.uniform3fv(sky.up, camera.up);
@@ -208,16 +230,24 @@ export class Renderer {
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.useProgram(voxel.p);
+    gl.uniform1i(voxel.post, settings.post);
+    gl.uniform2f(voxel.viewport, width, height);
+    gl.uniform1i(voxel.highFog, settings.fog === 'high');
+    gl.uniform1i(voxel.waves, false);
+    gl.uniform1f(voxel.clock, performance.now()/1000);
+    gl.uniform3fv(voxel.eye, camera.position);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
     gl.uniform1i(voxel.atlas, 0);
     gl.uniformMatrix4fv(voxel.vp, false, vp);
-    gl.uniform2f(voxel.fog, radius*.60, radius);
+    gl.uniform2f(voxel.fog, radius*.55, radius*.94);
     gl.uniform3fv(voxel.horizon, horizon);
     gl.uniform1f(voxel.daylight, daylight);
     gl.uniform1f(voxel.alpha, 1);
     gl.uniform2f(voxel.rotation, 1, 0);
+    this.triangles = 0;
     const draw = (buffer, x, y, z) => {
       if (!buffer) return;
+      this.triangles += buffer.count / 3;
       gl.uniform3f(voxel.offset, x-px, y-py, z-pz);
       gl.bindVertexArray(buffer.vao);
       gl.drawArrays(gl.TRIANGLES, 0, buffer.count);
@@ -239,6 +269,7 @@ export class Renderer {
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     gl.uniform1f(voxel.alpha, .70);
+    gl.uniform1i(voxel.waves, settings.water);
     water.sort((a,b) => b[1]-a[1]);
     for (const [tile] of water) draw(tile.mesh.liquid, tile.bounds[0], 0, tile.bounds[1]);
     gl.depthMask(true);

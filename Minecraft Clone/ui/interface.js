@@ -1,6 +1,6 @@
 import { blocks, faceTile } from '../world/blocks.js';
 import { COLS, TILE } from '../engine/atlas.js';
-import { presets, normalizeSettings, saveSettings } from './settings.js';
+import { presets, settingRules, normalizeSettings, saveSettings } from './settings.js';
 
 export const el = id => document.getElementById(id);
 
@@ -15,14 +15,16 @@ export class Interface {
     el('play').addEventListener('click', () => game.lock());
     el('settings').addEventListener('click', () => this.show('settings'));
     el('back').addEventListener('click', () => this.show('menu'));
-    el('preset').replaceChildren(...Object.keys(presets).map(name => new Option(name, name)));
+    el('preset').replaceChildren(...['Custom', ...Object.keys(presets)].map(name => new Option(name, name)));
+    el('preset').options[0].disabled = true;
     el('preset').addEventListener('change', e => {
       const preset = e.target.value;
       this.setSettings({ ...presets[preset], preset });
     });
-    for (const key of ['distance', 'fov', 'sensitivity', 'clouds']) {
-      el(key).addEventListener('input', e => this.setSettings({
-        [key]: key === 'clouds' ? e.target.checked : e.target.valueAsNumber,
+    for (const key of Object.keys(settingRules)) {
+      el(key === 'overlay' ? 'show-overlay' : key).addEventListener('input', e => this.setSettings({
+        [key]: settingRules[key] === 'boolean' ? e.target.checked
+          : key === 'fog' ? e.target.value : Number(e.target.value),
       }));
     }
     el('chat-form').addEventListener('submit', e => {
@@ -37,7 +39,12 @@ export class Interface {
       input.value = '';
     });
     el('command').addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const matches = game.commands.complete(e.target.value);
+        if (matches.length === 1) e.target.value = matches[0] + ' ';
+        else if (matches.length) this.log(matches.join('  '));
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         this.show('menu');
         el('play').focus();
@@ -59,11 +66,14 @@ export class Interface {
 
   syncSettings() {
     const { settings } = this.game;
-    for (const key of ['preset', 'distance', 'fov', 'sensitivity']) el(key).value = settings[key];
-    el('clouds').checked = settings.clouds;
-    el('distance-value').value = `${settings.distance} chunks`;
-    el('fov-value').value = `${settings.fov}°`;
-    el('sensitivity-value').value = `${settings.sensitivity.toFixed(2)}×`;
+    el('preset').value = settings.preset;
+    for (const [key, rule] of Object.entries(settingRules)) {
+      if (rule === 'boolean') el(key === 'overlay' ? 'show-overlay' : key).checked = settings[key];
+      else el(key).value = settings[key];
+      const output = el(`${key}-value`);
+      if (output) output.value = key === 'scale' ? `${Math.round(settings[key]*100)}%`
+        : `${settings[key]}${key === 'distance' || key === 'detail' ? ' chunks' : key === 'fov' ? '°' : key === 'budget' ? ' ms' : '×'}`;
+    }
   }
 
   show(view) {
@@ -110,7 +120,9 @@ export class Interface {
     const biome = world.generator.surface?.(x,z).biome;
     el('dimension-name').textContent = biome ? `${world.dimension.name} · ${biome}` : world.dimension.name;
     el('location').textContent = `XYZ  ${x} / ${y} / ${z}`;
-    el('statusline').textContent = `${camera.mode.name}  /  ${player.flying ? 'Flying' : player.mode}  /  ${fps} FPS · ${drawn} tiles`;
+    el('statusline').textContent = `${camera.mode?.name ?? 'Preview'}  /  ${player.flying ? 'Flying' : player.mode}  /  ${fps} FPS · ${drawn} tiles`;
+    el('performance').hidden = !this.game.settings.overlay;
+    el('performance').textContent = `${fps} FPS · ${this.game.frameMs?.toFixed(1) ?? '—'} ms\n${drawn} tiles · ${this.game.renderer.triangles ?? 0} triangles\nQueue ${this.game.stream.jobs.length + this.game.stream.dirty.size} · ${this.game.settings.preset} · ${this.game.settings.distance} chunks`;
     const signature = `${player.slot}:${player.hotbar.join(',')}`;
     if (signature === this.hotbarSignature) return;
     this.hotbarSignature = signature;

@@ -45,6 +45,10 @@ export class ChunkStream {
   update(position, settings) {
     const cx = chunkOf(position[0]), cz = chunkOf(position[2]);
     const { distance, detail } = settings;
+    if (this.ao !== settings.ao) {
+      this.ao = settings.ao;
+      for (const [key, tile] of this.active) if (tile.step === 1) this.dirty.add(key);
+    }
     const signature = `${cx},${cz},${distance},${detail}`;
     if (signature !== this.signature) {
       this.signature = signature;
@@ -59,11 +63,20 @@ export class ChunkStream {
       this.jobs = this.wanted.filter(tile => !this.active.has(tile.key));
       this.world.prune(cx, cz, Math.min(distance, detail) + 3);
     }
-    const deadline = performance.now() + 4;
+    const deadline = performance.now() + (settings.budget ?? 4);
+    let uploads = 0;
     do {
       const dirtyKey = this.dirty.values().next().value;
       const tile = dirtyKey ? this.active.get(dirtyKey) : this.jobs.shift();
       if (!tile) break;
+      if (tile.step === 1) {
+        const missing = [[0,0],[1,0],[-1,0],[0,1],[0,-1]].find(([dx,dz]) => !this.world.chunks.has(`${tile.x+dx},${tile.z+dz}`));
+        if (missing) {
+          this.world.chunk(tile.x+missing[0], tile.z+missing[1]);
+          if (!dirtyKey) this.jobs.unshift(tile);
+          continue;
+        }
+      }
       if (dirtyKey) {
         this.dirty.delete(dirtyKey);
         this.renderer.release(tile.mesh);
@@ -75,9 +88,10 @@ export class ChunkStream {
       const data = step > 1 ? meshTerrain((a, b) => surface.call(world.generator, a, b), ox, oz, step)
         : meshChunk(world.chunk(x, z), [
           world.chunk(x+1,z), world.chunk(x-1,z), world.chunk(x,z+1), world.chunk(x,z-1),
-        ]);
+        ], settings.ao);
       this.active.set(key, { ...tile, mesh: this.renderer.upload(data), bounds: [ox, oz, ox + step*SIZE, oz + step*SIZE, HEIGHT] });
-    } while (performance.now() < deadline);
+      uploads++;
+    } while (uploads < 2 && performance.now() < deadline);
   }
 
   dispose() {

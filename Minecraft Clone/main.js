@@ -136,13 +136,18 @@ class Game {
   }
 
   frame(at) {
+    const limit = this.settings.fpsLimit;
+    if (limit && this.lastFrame !== undefined && at - this.lastFrame < 1000/limit - .5) {
+      requestAnimationFrame(next => this.frame(next));
+      return;
+    }
     const elapsed = this.lastFrame === undefined ? 0 : at - this.lastFrame;
     this.lastFrame = at;
     if (this.ui.view === 'play') {
       let remaining = Math.min(.08, elapsed/1000);
       while (remaining > 0) {
         const dt = Math.min(remaining, 1/120);
-        this.player.step(dt, this.keys, this.world);
+        this.player.step(dt * (this.speed ?? 1), this.keys, this.world);
         remaining -= dt;
       }
       this.time = (this.time + elapsed/1_200_000) % 1;
@@ -163,7 +168,15 @@ class Game {
       this.frameCount = 0;
       this.periodStart = at;
     }
-    if (this.started) this.ui.update(camera, this.fps ?? '—', drawn);
+    this.frameMs = elapsed;
+    if (this.benchmark) {
+      this.benchmark.frames++;
+      if (at - this.benchmark.start >= 5000) {
+        this.ui.log(`Benchmark: ${(this.benchmark.frames*1000/(at-this.benchmark.start)).toFixed(1)} FPS over 5s · ${this.settings.preset}, ${this.settings.distance} chunks.`);
+        this.benchmark = null;
+      }
+    }
+    this.ui.update(camera, this.fps ?? '—', drawn);
     requestAnimationFrame(next => this.frame(next));
   }
 }
