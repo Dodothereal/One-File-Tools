@@ -72,6 +72,23 @@ test("idle Overworld departures climb over the terrain ahead of the default spaw
   }
 });
 
+test("every jet has a stable departure from the Nether, End, and City spawns", () => {
+  for (const dimensionId of ["nether", "end", "city"]) {
+    const dimension = dimensions.get(dimensionId);
+    const world = new World(dimension, 2391);
+    for (const [id, spec] of Object.entries(jets)) {
+      const player = new Player(world.spawn(...dimension.spawn));
+      player.yaw = -0.5;
+      const launch = findLaunchSite(world, player.position, spec);
+      assert(launch, `${id}: no launch site in ${dimensionId}`);
+      player.vehicle = new Jet(id, launch, player, {}, new JetWeapons({}), world);
+      steps(120, (dt) => player.step(dt, new Set(), world));
+      assert.equal(player.vehicle?.id, id, `${id} crashed in ${dimensionId}`);
+      assert(Math.hypot(...player.position.map((n, i) => n - launch[i])) > 10);
+    }
+  }
+});
+
 test("jets accelerate and bank; boost is distinct and collision safely returns the pilot", () => {
   const { world, jet, player } = hangar("kestrel");
   const boost = new Set(["KeyW", "Space"]);

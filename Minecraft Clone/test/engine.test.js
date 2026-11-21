@@ -22,7 +22,7 @@ test('Overworld is deterministic with terrain, water and caves; stubs are regist
   const region = [-2,-1,0,1].flatMap(x => [-1,0,1,2].map(z => first.chunk(x,z)));
   assert(region.some(chunk => chunk.includes(WATER)));
   assert(region.some(chunk => chunk.subarray(SIZE*SIZE*4, SIZE*SIZE*12).includes(AIR)));
-  assert.deepEqual([...dimensions.values()].filter(d => !d.create).map(d => d.id), ['nether','end','city']);
+  assert.deepEqual([...dimensions.values()].filter(d => !d.create).map(d => d.id), []);
 });
 
 test('edits use floor-based chunk addresses and survive bounds pruning', () => {
@@ -128,7 +128,7 @@ test('command registry handles navigation, inventory, time, help and invalid com
   const world = worldWith(() => {});
   const game = { player: new Player([0,1,0]), world, enterDimension(dimension) { this.dimension = dimension; } };
   assert.match(registry.execute('/help', game), /\/time/);
-  assert.match(registry.execute('/dimension city', game), /not yet playable/);
+  assert.match(registry.execute('/dimension city', game), /Entered/);
   assert.match(registry.execute('/dimension overworld', game), /Entered/);
   assert.equal(game.dimension.id, 'overworld');
   registry.execute('/tp ~1 38 ~-2', game);

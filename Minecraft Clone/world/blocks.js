@@ -1,3 +1,5 @@
+import { registerDimensionBlocks } from './blocks_dimensions.js';
+
 export const blocks = [];
 export const tiles = [];
 
@@ -40,6 +42,8 @@ export const BEDROCK = registerBlock('bedrock', 'Bedrock', bedrock, { unbreakabl
 export const BRICK = registerBlock('terracotta_brick', 'Terracotta brick', brick);
 export const PRISM = registerBlock('verdigris', 'Verdigris tile', prism);
 export const SNOW = registerBlock('snow', 'Snow', snow);
+
+export const dimensionBlocks = registerDimensionBlocks(registerTile, registerBlock);
 
 export function faceTile(id, face) {
   const { texture } = blocks[id];

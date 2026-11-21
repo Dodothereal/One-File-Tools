@@ -18,7 +18,7 @@ function face(out, id, f, x, y, z, step = 1, tall = 1, lower = 0, lighting = nul
   for (const i of triangles) {
     const [dx, dy, dz] = corners[i];
     out.push(x + dx * step, y + dy * tall - lower, z + dz * step,
-      uv[i][0], uv[i][1], tile, shade * (lighting?.[i] ?? 1));
+      uv[i][0], uv[i][1], tile, blocks[id].glow ? -1 : shade * (lighting?.[i] ?? 1));
   }
 }
 
@@ -101,7 +101,7 @@ export function meshBoxes(boxes) {
       for (const i of triangles) {
         const [dx, dy, dz] = corners[i];
         opaque.push(x + dx * size[0], y + dy * size[1], z + dz * size[2],
-          uv[i][0], uv[i][1], tile ?? faceTile(id, f), glow ? 2 : shade);
+          uv[i][0], uv[i][1], tile ?? faceTile(id, f), glow ? 2 : blocks[id]?.glow ? -1 : shade);
       }
     }
   }

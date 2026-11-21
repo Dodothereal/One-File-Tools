@@ -27,8 +27,11 @@ function sweep(world, from, to, accepts = solid(world)) {
 
 export function findLaunchSite(world, [x, y, z], spec) {
   const radius = Math.ceil(Math.max(spec.span, spec.length));
-  const roof = world.dimension.id === "nether" ? HEIGHT - 9 : HEIGHT + 18;
-  for (let launchY = Math.max(5, Math.floor(y) + 9); launchY <= roof; launchY += 4) {
+  const enclosed = world.dimension.enclosed || world.dimension.id === "nether";
+  const roof = enclosed ? HEIGHT - 19 : HEIGHT + 18;
+  const floor = Math.max(5, Math.floor(y) + 9);
+  for (let level = floor; level <= roof; level += 4) {
+    const launchY = enclosed ? roof - (level - floor) : level;
     let clear = true;
     for (let dx = -radius; dx <= radius && clear; dx++) {
       for (let dz = -radius; dz <= radius && clear; dz++) {

@@ -1,5 +1,6 @@
 import { COLS, TILE } from './atlas.js';
-import { viewAxes, viewProjection, visible } from "./math.js";
+import { viewAxes, viewProjection, visible } from './math.js';
+import { atmosphere } from './atmosphere.js';
 
 const grading = `
 uniform bool post;
@@ -26,7 +27,7 @@ out vec4 color;
 uniform vec3 forward, right, up, eye, horizon, zenith, sun;
 uniform vec2 scale;
 uniform float daylight;
-uniform bool clouds;
+uniform bool clouds, stars, sunlight;
 ${grading}
 float random(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float noise(vec2 p) {
@@ -38,14 +39,14 @@ void main() {
   vec3 rgb = mix(horizon, zenith, smoothstep(-.08,.85,ray.y));
   float sunDot = max(0., dot(ray,sun));
   vec3 sunColor = vec3(1.,.84,.57);
-  rgb += sunColor * pow(sunDot,20.) * .2 * daylight;
-  if (ray.y > -.02 && sun.y > -.03) {
+  if (sunlight) rgb += sunColor * pow(sunDot,20.) * .2 * daylight;
+  if (sunlight && ray.y > -.02 && sun.y > -.03) {
     vec3 local = ray - sun * sunDot;
     float square = max(abs(dot(local,normalize(vec3(sun.z,0.,-sun.x)))),abs(local.y));
     if (sunDot > .99 && square < .029) rgb = sunColor;
   }
   vec2 starCell = floor(vec2(atan(ray.x,ray.z),asin(ray.y))*310.);
-  if (ray.y > 0. && random(starCell) > .996) rgb += vec3(.65,.76,.95) * (1.-daylight);
+  if (stars && ray.y > 0. && random(starCell) > .996) rgb += vec3(.65,.76,.95) * (1.-daylight);
   if (clouds && ray.y > .055 && eye.y < 113.) {
     vec2 p = floor((eye.xz + ray.xz * ((113. - eye.y) / ray.y)) / 4.) * .0625;
     float cover = noise(p)*.7 + noise(p*2.3)*.3;
@@ -93,7 +94,7 @@ void main() {
   vec2 texel = vec2(mod(tile,${COLS}.),floor(tile/${COLS}.))*${TILE}. + clamp(uv*${TILE}., .5, ${TILE - 0.5});
   vec3 base = texture(atlas,texel/vec2(textureSize(atlas,0))).rgb;
   vec3 light = mix(vec3(.27,.36,.55),vec3(1.05,1.03,.96),daylight);
-  vec3 lit = base * min(shade, 1.) * mix(light, vec3(1.3), clamp(shade - 1., 0., 1.));
+  vec3 lit = shade < 0. ? base : base * min(shade, 1.) * mix(light, vec3(1.3), clamp(shade - 1., 0., 1.));
   if (waves) lit += vec3(.35,.45,.5) * pow(max(0.,sin(uv.x*12.+clock)*cos(uv.y*11.-clock)),16.) * daylight;
   float haze = highFog ? smoothstep(fog.x,fog.y,fogDepth) : clamp((fogDepth-fog.x)/(fog.y-fog.x),0.,1.);
   color = vec4(grade(mix(lit,horizon,haze)),alpha);
@@ -136,7 +137,6 @@ function boxLines() {
   return new Float32Array(points);
 }
 
-const mix = (a, b, t) => a.map((n, i) => n + (b[i]-n)*t);
 const identity = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
 
 export class Renderer {
@@ -145,7 +145,7 @@ export class Renderer {
     if (!gl) throw new Error('This world needs WebGL 2. Try a current browser with hardware acceleration on.');
     this.gl = gl;
     this.canvas = canvas;
-    this.sky = program(gl, skyVertex, skyFragment, ['forward','right','up','eye','horizon','zenith','sun','scale','daylight','clouds','post','viewport']);
+    this.sky = program(gl, skyVertex, skyFragment, ['forward','right','up','eye','horizon','zenith','sun','scale','daylight','clouds','stars','sunlight','post','viewport']);
     this.voxel = program(gl, voxelVertex, voxelFragment, ['vp','offset','rotation','atlas','horizon','fog','daylight','alpha','post','viewport','highFog','waves','clock','eye']);
     this.line = program(gl, lineVertex, lineFragment, ['vp','offset']);
     this.edges = this.buffer(boxLines(), 3);
@@ -206,8 +206,7 @@ export class Renderer {
     const sun = [Math.cos(phase) * 0.94, altitude * 0.94, 0.341];
     const lit = Math.min(1, Math.max(0, (altitude + .18) * 2.1));
     const daylight = dimension.daylight ?? lit;
-    const horizon = mix([.06,.09,.16], dimension.sky ?? [.53,.73,.89], daylight);
-    const zenith = mix([.015,.025,.08], dimension.zenith ?? [.18,.42,.69], daylight);
+    const { horizon, zenith, fog, fogRange, stars, sun: sunlight } = atmosphere(dimension, settings, daylight);
     const tan = Math.tan(camera.fov * Math.PI / 360);
     gl.viewport(0, 0, width, height);
     gl.disable(gl.DEPTH_TEST);
@@ -226,6 +225,8 @@ export class Renderer {
     gl.uniform2f(sky.scale, tan * aspect, tan);
     gl.uniform1f(sky.daylight, daylight);
     gl.uniform1i(sky.clouds, settings.clouds && dimension.clouds !== false);
+    gl.uniform1i(sky.stars, stars);
+    gl.uniform1i(sky.sunlight, sunlight);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
@@ -239,8 +240,8 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
     gl.uniform1i(voxel.atlas, 0);
     gl.uniformMatrix4fv(voxel.vp, false, vp);
-    gl.uniform2f(voxel.fog, radius*.55, radius*.94);
-    gl.uniform3fv(voxel.horizon, horizon);
+    gl.uniform2f(voxel.fog, ...fogRange);
+    gl.uniform3fv(voxel.horizon, fog);
     gl.uniform1f(voxel.daylight, daylight);
     gl.uniform1f(voxel.alpha, 1);
     gl.uniformMatrix3fv(voxel.rotation, false, identity);

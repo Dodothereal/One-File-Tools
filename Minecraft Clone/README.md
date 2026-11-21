@@ -31,8 +31,14 @@ requests are needed to play.
 Graphics settings persist locally where browser storage is available. World edits
 are kept in memory for the current page session, including across dimension changes.
 Creative is the default; survival mode currently changes movement and reach, not
-health, hunger, or crafting. Nether, End, and City are registered but not playable
-yet.
+health, hunger, or crafting. Use `/dimension nether` to visit the Nether's lava
+seas, forests, caves and bridges. `/dimension end` visits floating islands,
+obsidian pillars and outer settlements; `/dimension city` visits an infinite
+street grid with towers, parks and plazas. Three gates near Overworld spawn lead
+to those dimensions, with return gates near each arrival. Stand inside a gate
+for one second to travel (End portals are instant); arrival has a three-second
+cooldown. `/portal <nether|end|city>` builds a gate in front of you. Completing an
+obsidian rectangle with a 2×3 through 21×21 interior automatically lights it.
 
 ## Flight hangar
 
@@ -104,6 +110,11 @@ The console supports Tab completion of command names and `/help [command]`:
   `generate({ x, z, size, height, set })` and optionally
   `surface(x, z) → { y, id, biome }` for distant terrain. `World` caches 16×96×16
   voxel chunks and overlays sparse edits; the data store is renderer-independent.
+  Generators may supply `spawn(x, z)` returning a safe `[x, y, z]` position (or
+  nothing to use the surface scan), useful beneath the Nether's bedrock roof.
+  `world/blocks_dimensions.js` registers additional procedural palettes through
+  `blocks.js`. Blocks with `glow: true` ignore face shading and daylight (but
+  still receive distance fog); dimension `fog` overrides the default horizon fog.
 - **`engine/`**: `meshChunk(data, neighbors)` consumes typed arrays, with neighbors
   ordered +X, −X, +Z, −Z, and returns transferable opaque and liquid vertex arrays.
   `ChunkStream` prioritizes local tiles, invalidates edited boundaries, and
