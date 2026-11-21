@@ -16,12 +16,12 @@ registerDimension('overworld', { name: 'Overworld', create: createOverworld, sky
 registerDimension('nether', {
   name: 'Nether', create: createNether, spawn: [0, 0],
   sky: [.25, .035, .025], zenith: [.12, .015, .02], fog: [.18, .025, .018],
-  daylight: .18, clouds: false,
+  daylight: .18, clouds: false, stars: false, sun: false, enclosed: true,
 });
 registerDimension('end', {
   name: 'End', create: createEnd, spawn: [18, 0],
   sky: [.025, .015, .055], zenith: [.012, .008, .03], fog: [.075, .035, .12],
-  daylight: .22, clouds: false,
+  daylight: .22, clouds: false, sun: false,
 });
 registerDimension('city', {
   name: 'City', create: createCity, spawn: [10, 12],
