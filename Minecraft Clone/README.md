@@ -33,6 +33,47 @@ Creative is the default; survival mode currently changes movement and reach, not
 health, hunger, or crafting. Nether, End, and City are registered but not playable
 yet. Cockpit view falls back to first person until a vehicle supplies a camera.
 
+## Graphics and console
+
+Graphics & controls groups quality, performance and camera controls. Presets set
+all quality options; editing one displays **Custom** (FOV, sensitivity and the
+overlay are independent). v1 preferences migrate to v2 without losing overrides.
+
+| Preset | Distance | Full-detail ring | Resolution | FPS cap | Streaming budget |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Potato | 4 | 1 | 50% | 60 | 2 ms |
+| Low | 6 | 2 | 65% | 60 | 3 ms |
+| Balanced | 10 | 3 | 85% | 60 | 4 ms |
+| High | 16 | 4 | 100% | 120 | 4 ms |
+| Ultra | 32 | 5 | 100% | Unlimited | 5 ms |
+| Ultra++ | 64 | 6 | 100% | Unlimited | 5 ms |
+
+Potato/Low disable clouds, per-vertex ambient occlusion, animated water and shader
+grading. Balanced and above enable them and smooth fog. Grading uses inexpensive
+highlight glow, tone mapping and a vignette, not a framebuffer bloom blur. Water
+uses small waves and animated highlights. LOD tiles reduce their sampling density
+with distance, retain their full footprint and add boundary skirts; fog hides the
+outer edge. Streaming prioritizes near tiles, yields between individual chunk
+generations, obeys a configurable soft CPU budget and uploads at most two tiles
+per frame. A single chunk generation or mesh can exceed that budget; there is no
+worker. The overlay shows FPS, frame interval, drawn tiles/triangles and pending
+tiles. Actual performance depends on the GPU, resolution and dimension generator.
+
+The console supports Tab completion of command names and `/help [command]`:
+
+- `/graphics [Potato|Low|Balanced|High|Ultra|Ultra++]`, `/render <2-64>`,
+  `/fov <60-105>`, `/set <option> <value>` (no arguments lists valid options).
+  Option names match the settings fields: `distance`, `detail`, `scale`, `clouds`,
+  `ao`, `fog` (`low|high`), `water`, `post`, `fpsLimit` (`30|60|120|unlimited`),
+  `budget`, `overlay`, `fov`, `sensitivity`. Booleans accept `true|false|on|off`.
+- `/setblock <x y z> <block>` and `/fill <x1 y1 z1> <x2 y2 z2> <block>` accept
+  block keys/IDs and `~` relative coordinates. Coordinates are floored to voxels;
+  fills are limited to 32768 blocks and the world's Y range.
+- `/speed <0.1-5>`, `/fly` (creative only), `/pos`, `/clear`, `/perf` and
+  `/benchmark` (average rendered FPS over five seconds, printed to the console).
+- Existing `/help`, `/tp`, `/gamemode`, `/time`, `/dimension`, `/give`, `/seed`
+  remain available. Weather and dimension location search are not implemented.
+
 ## ARCHITECTURE
 
 - **`world/`**: `blocks.js` owns byte-sized IDs and procedural atlas definitions.
