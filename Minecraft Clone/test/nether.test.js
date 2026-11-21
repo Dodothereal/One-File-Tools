@@ -47,6 +47,19 @@ test('Nether spawn is open air above a solid safe platform for multiple seeds', 
   assert.equal(createNether(1).spawn(100, 100), undefined);
 });
 
+test('Nether bridges have three unobstructed walking lanes across chunks and negative spans', () => {
+  for (const seed of [2391, 1, 91]) {
+    const world = nether(seed);
+    for (const [offsetX, offsetZ] of [[0, 0], [-160, -192]]) {
+      for (let x = 32; x < 112; x++) for (let lane = 0; lane < 5; lane++) {
+        assert.equal(world.get(x + offsetX, 50, lane + offsetZ), B.nether_bricks);
+        assert.equal(world.get(x + offsetX, 51, lane + offsetZ), lane === 0 || lane === 4 ? B.nether_bricks : AIR);
+        for (let y = 52; y < 55; y++) assert.equal(world.get(x + offsetX, y, lane + offsetZ), AIR);
+      }
+    }
+  }
+});
+
 test('dimension palettes have valid distinct byte IDs and procedural atlas tiles', () => {
   assert(blocks.length <= 256);
   assert.equal(new Set(blocks.map(b => b.key)).size, blocks.length);

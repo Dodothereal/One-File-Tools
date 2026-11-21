@@ -57,17 +57,6 @@ export function createNether(seed) {
           const length = 1 + Math.floor(hash(seed + 127, wx, wz) * 5);
           for (let y = ceiling - length; y < ceiling; y++) set(dx, y, dz, B.glowstone, AIR);
         }
-        // Sparse, world-aligned bridge spans with piers and low parapets.
-        const lane = ((wz % 192) + 192) % 192;
-        const span = ((wx % 160) + 160) % 160;
-        if (lane < 5 && span >= 32 && span < 112) {
-          for (let y = 49; y <= 50; y++) set(dx, y, dz, B.nether_bricks);
-          if (lane === 0 || lane === 4) set(dx, 51, dz, B.nether_bricks);
-          if (span % 16 < 2 && (lane === 0 || lane === 4)) {
-            for (let y = ground.y + 1; y < 49; y++) set(dx, y, dz, B.nether_bricks);
-          }
-          for (let y = 52; y < 55; y++) set(dx, y, dz, AIR);
-        }
       }
       // Evaluate roots beyond the chunk boundary so fungus canopies are seamless.
       for (let dz = -3; dz < size + 3; dz++) for (let dx = -3; dx < size + 3; dx++) {
@@ -86,6 +75,20 @@ export function createNether(seed) {
           }
         }
         for (let y = ground.y + 1; y < top; y++) set(dx, y, dz, warped ? B.warped_stem : B.crimson_stem, AIR);
+      }
+      // Sparse, world-aligned bridge spans with piers and low parapets.
+      for (let dz = 0; dz < size; dz++) for (let dx = 0; dx < size; dx++) {
+        const wx = x + dx, wz = z + dz;
+        const lane = ((wz % 192) + 192) % 192;
+        const span = ((wx % 160) + 160) % 160;
+        if (lane >= 5 || span < 32 || span >= 112) continue;
+        for (let y = 49; y <= 50; y++) set(dx, y, dz, B.nether_bricks);
+        const edge = lane === 0 || lane === 4;
+        if (edge) set(dx, 51, dz, B.nether_bricks);
+        if (span % 16 < 2 && edge) {
+          for (let y = column(wx, wz).y + 1; y < 49; y++) set(dx, y, dz, B.nether_bricks);
+        }
+        for (let y = edge ? 52 : 51; y < 55; y++) set(dx, y, dz, AIR);
       }
     },
   };
