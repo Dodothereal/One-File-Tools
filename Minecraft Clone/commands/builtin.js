@@ -1,7 +1,7 @@
 import { CommandRegistry } from './registry.js';
 import { AIR, blocks, dimensionBlocks } from '../world/blocks.js';
 import { dimensions } from '../world/dimensions.js';
-import { lightNetherFrame } from '../world/portals.js';
+import { lightNetherFrames } from '../world/portals.js';
 import { HEIGHT } from '../world/world.js';
 import { presets, settingRules } from '../ui/settings.js';
 
@@ -78,7 +78,7 @@ export function createCommands(registry = new CommandRegistry()) {
         changed++;
         frameEdits?.push([x,y,z]);
       }
-      for (const position of frameEdits ?? []) lightNetherFrame(game.world, position);
+      if (frameEdits?.length) lightNetherFrames(game.world, frameEdits);
       return `Changed ${changed} blocks.`;
     });
   }
