@@ -1,5 +1,5 @@
 import { COLS, TILE } from './atlas.js';
-import { viewProjection, visible } from './math.js';
+import { viewAxes, viewProjection, visible } from './math.js';
 
 const skyVertex = `#version 300 es
 out vec2 point;
@@ -47,13 +47,12 @@ layout(location=0) in vec3 position;
 layout(location=1) in vec4 material;
 uniform mat4 vp;
 uniform vec3 offset;
-uniform vec2 rotation;
+uniform mat3 rotation;
 out vec2 uv;
 out float shade, fogDepth;
 flat out float tile;
 void main() {
-  vec3 p = vec3(position.x*rotation.x + position.z*rotation.y, position.y,
-                position.z*rotation.x - position.x*rotation.y) + offset;
+  vec3 p = rotation * position + offset;
   gl_Position = vp * vec4(p,1.);
   fogDepth = length(p);
   uv = material.xy;
@@ -75,7 +74,7 @@ void main() {
   vec2 texel = vec2(mod(tile,${COLS}.),floor(tile/${COLS}.))*${TILE}. + clamp(uv*${TILE}., .5, ${TILE - 0.5});
   vec3 base = texture(atlas,texel/vec2(textureSize(atlas,0))).rgb;
   vec3 light = mix(vec3(.27,.36,.55),vec3(1.05,1.03,.96),daylight);
-  vec3 lit = base * shade * light;
+  vec3 lit = base * min(shade, 1.) * mix(light, vec3(1.3), clamp(shade - 1., 0., 1.));
   float haze = smoothstep(fog.x,fog.y,fogDepth);
   color = vec4(mix(lit,horizon,haze),alpha);
 }`;
@@ -118,6 +117,7 @@ function boxLines() {
 }
 
 const mix = (a, b, t) => a.map((n, i) => n + (b[i]-n)*t);
+const identity = new Float32Array([1,0,0, 0,1,0, 0,0,1]);
 
 export class Renderer {
   constructor(canvas, atlas) {
@@ -215,7 +215,7 @@ export class Renderer {
     gl.uniform3fv(voxel.horizon, horizon);
     gl.uniform1f(voxel.daylight, daylight);
     gl.uniform1f(voxel.alpha, 1);
-    gl.uniform2f(voxel.rotation, 1, 0);
+    gl.uniformMatrix3fv(voxel.rotation, false, identity);
     const draw = (buffer, x, y, z) => {
       if (!buffer) return;
       gl.uniform3f(voxel.offset, x-px, y-py, z-pz);
@@ -232,10 +232,13 @@ export class Renderer {
       drawn++;
     }
     for (const entity of entities) {
-      gl.uniform2f(voxel.rotation, Math.cos(entity.yaw ?? 0), Math.sin(entity.yaw ?? 0));
+      const { forward, right, up } = viewAxes(entity.yaw ?? 0, entity.pitch ?? 0, entity.roll ?? 0);
+      const scale = entity.scale ?? 1;
+      gl.uniformMatrix3fv(voxel.rotation, false,
+        [...right.map(n => -n*scale), ...up.map(n => n*scale), ...forward.map(n => n*scale)]);
       draw(entity.mesh.opaque, ...entity.position);
     }
-    gl.uniform2f(voxel.rotation, 1, 0);
+    gl.uniformMatrix3fv(voxel.rotation, false, identity);
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     gl.uniform1f(voxel.alpha, .70);

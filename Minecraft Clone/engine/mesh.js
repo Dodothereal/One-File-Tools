@@ -72,14 +72,14 @@ export function meshTerrain(surface, x, z, step) {
 
 export function meshBoxes(boxes) {
   const opaque = [];
-  for (const { origin, size, id } of boxes) {
+  for (const { origin, size, id, tile, glow = false } of boxes) {
     const [x, y, z] = origin;
     for (let f = 0; f < faces.length; f++) {
       const [, corners, shade] = faces[f];
       for (const i of triangles) {
         const [dx, dy, dz] = corners[i];
         opaque.push(x + dx * size[0], y + dy * size[1], z + dz * size[2],
-          uv[i][0], uv[i][1], faceTile(id, f), shade);
+          uv[i][0], uv[i][1], tile ?? faceTile(id, f), glow ? 2 : shade);
       }
     }
   }

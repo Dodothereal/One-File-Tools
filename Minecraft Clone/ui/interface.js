@@ -1,6 +1,7 @@
 import { blocks, faceTile } from '../world/blocks.js';
 import { COLS, TILE } from '../engine/atlas.js';
 import { presets, normalizeSettings, saveSettings } from './settings.js';
+import { FlightUI } from './flight.js';
 
 export const el = id => document.getElementById(id);
 
@@ -12,6 +13,7 @@ export class Interface {
     this.hotbarSignature = '';
     this.history = [];
     this.historyIndex = 0;
+    this.flight = new FlightUI(game, this, el);
     el('play').addEventListener('click', () => game.lock());
     el('settings').addEventListener('click', () => this.show('settings'));
     el('back').addEventListener('click', () => this.show('menu'));
@@ -68,6 +70,7 @@ export class Interface {
 
   show(view) {
     this.view = view;
+    this.flight.show(view);
     el('overlay').hidden = view === 'play' || view === 'chat';
     el('menu').hidden = view !== 'menu';
     el('settings-panel').hidden = view !== 'settings';
@@ -105,6 +108,7 @@ export class Interface {
 
   update(camera, fps, drawn) {
     const { player, world } = this.game;
+    this.flight.update(player.vehicle, camera);
     const [x,y,z] = player.position.map(Math.floor);
     const biome = world.generator.surface?.(x,z).biome;
     el('dimension-name').textContent = biome ? `${world.dimension.name} · ${biome}` : world.dimension.name;

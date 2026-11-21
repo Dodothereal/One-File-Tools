@@ -23,7 +23,8 @@ requests are needed to play.
 | Space twice | Toggle creative flight; Space ascends, Shift descends |
 | Left / right mouse | Break / place the selected block |
 | 1–9 or scroll | Pick a hotbar slot |
-| F5 | First person → third person close → third person far → cockpit hook |
+| F5 | On foot: first person → third person close → third person far |
+| J | Open the flight hangar from the world |
 | / or Enter | Open the world console; type `/help` for commands |
 | Escape | Pause, or close the console and return to the pause menu |
 
@@ -31,7 +32,26 @@ Graphics settings persist locally where browser storage is available. World edit
 are kept in memory for the current page session, including across dimension changes.
 Creative is the default; survival mode currently changes movement and reach, not
 health, hunger, or crafting. Nether, End, and City are registered but not playable
-yet. Cockpit view falls back to first person until a vehicle supplies a camera.
+yet.
+
+## Flight hangar
+
+Choose **Flight hangar** from the menu, press **J** while playing, or run
+`/jet kestrel`, `/jet wraith`, or `/jet eventide` in the world console.
+Jets launch above you when there's enough clearance.
+
+| Aircraft | Style | Right mouse |
+| --- | --- | --- |
+| A-07 Kestrel | Vintage interceptor | Blaze Rocket: a single explosive shot |
+| M-24 Wraith | Modern strike jet | Pulse Salvo: three spread shots |
+| X-99 Eventide | Future voidcraft | Singularity: a delayed, collapsing gravity well |
+
+- **Mouse / A / D** steer; **W / S** raise or lower throttle; **Space** boosts.
+- **F5** cycles close chase, far chase, and cockpit. Each view has flight telemetry.
+- **Left mouse** fires the auto cannon (hold to repeat). **Right mouse** fires
+  the special; the HUD shows its recharge. Impacts remove breakable voxel blocks.
+- **E** or `/jet return` returns you to your launch point. A terrain collision
+  triggers the same return automatically.
 
 ## ARCHITECTURE
 
@@ -54,8 +74,9 @@ yet. Cockpit view falls back to first person until a vehicle supplies a camera.
 - **`entities/`**: `Player` handles motion and voxel collision. Set
   `player.vehicle` to a `Vehicle` implementation to delegate input, camera,
   updates, and renderables while piloting. A vehicle camera can return
-  `{ position, yaw, pitch, fov }` for each perspective; renderables carry
-  `{ mesh, position, yaw }` with meshes uploaded through the renderer.
+  `{ position, yaw, pitch, roll, fov }` for each perspective; renderables carry
+  `{ mesh, position, yaw, pitch, roll, scale }` with meshes uploaded through the
+  renderer. Jets use voxel geometry and share a per-dimension projectile system.
 - **`ui/` and `commands/`**: `Interface` owns the HUD, pause menu, graphics and
   console. `ui/settings.js` handles preferences (Potato through Ultra++).
   `createCommands()` returns a `CommandRegistry`; add commands with
