@@ -74,6 +74,9 @@ public final class TextureGenerator {
                     float vein = (soft.getRGB(lx, ly) & 255) / 255f;
                     v *= 1 - 0.42f * vein;
                     float orn = ornament(w, t, p), star = sparkle(w, t, p);
+                    float hfd = heartField(w, t);
+                    boolean moat = hfd > 0.1f && hfd < 0.5f;
+                    if (moat) v *= 0.5f;
                     v *= 1 + 0.55f * orn;
                     int g = clamp(Math.round(v * 255));
                     albedo.setRGB(x, y, 0xff000000 | (g << 16) | (g << 8) | g);
@@ -85,6 +88,7 @@ public final class TextureGenerator {
                     e += 0.34f * (float) Math.exp(-Math.abs(1 - t - 0.012f) / 0.008f);
                     e += 0.12f * (float) Math.exp(-edge / 0.02f);
                     e += 0.045f * grain * (float) Math.sin(Math.PI * w);
+                    if (hfd < 0.5f) e *= 0.08f;
                     e = e * (1 - 0.5f * orn) + 0.95f * orn + star;
                     int ge = clamp(Math.round(e * 255));
                     glow.setRGB(x, y, 0xff000000 | (ge << 16) | (ge << 8) | ge);
@@ -140,11 +144,26 @@ public final class TextureGenerator {
         return a * a * a - x * x * y * y * y;
     }
 
-    /** Approximate signed distance to a unit heart outline (negative inside). */
+    /** Exact signed distance to a heart about 2 units tall, centred on the origin, point down (negative inside). */
     static float heartDist(float x, float y) {
-        float f = heart(x, y), e = 0.01f;
-        float gx = (heart(x + e, y) - heart(x - e, y)) / (2 * e), gy = (heart(x, y + e) - heart(x, y - e)) / (2 * e);
-        return f / ((float) Math.sqrt(gx * gx + gy * gy) + 0.6f);
+        float px = Math.abs(x) * 0.55f, py = (y + 1) * 0.55f, d;
+        if (px + py > 1) {
+            float ax = px - 0.25f, ay = py - 0.75f;
+            d = (float) Math.sqrt(ax * ax + ay * ay) - 0.35355f;
+        } else {
+            float ay = py - 1, m = 0.5f * Math.max(px + py, 0), bx = px - m, by = py - m;
+            d = (float) Math.sqrt(Math.min(px * px + ay * ay, bx * bx + by * by)) * Math.signum(px - py);
+        }
+        return d / 0.55f;
+    }
+
+    static final float[] HEART_T = {0.20f, 0.30f, 0.44f, 0.63f}, HEART_R = {0.016f, 0.027f, 0.042f, 0.060f};
+
+    /** Distance, in heart units, to the nearest heart of the chain; large when far away. */
+    static float heartField(float w, float t) {
+        float X = (w - 0.5f) * t * 0.80f, best = 9;
+        for (int k = 0; k < 4; k++) best = Math.min(best, heartDist(X * 1.35f / HEART_R[k], (HEART_T[k] - t) / HEART_R[k] + 0.1f));
+        return best;
     }
 
     static float line(float d, float half) {
@@ -179,20 +198,10 @@ public final class TextureGenerator {
             }
         }
         // chain of hearts down the middle, growing towards the edge
-        float[] tc = {0.20f, 0.30f, 0.44f, 0.63f};
-        float[] rr = {0.016f, 0.027f, 0.042f, 0.060f};
-        for (int k = 0; k < 4; k++) {
-            float hx = X * 1.35f / rr[k], hy = (tc[k] - t) / rr[k] + 0.1f;
-            if (Math.abs(hx) > 2.2f || Math.abs(hy) > 2.2f) continue;
-            float d = heartDist(hx, hy);
-            o = Math.max(o, line(d, 0.075f));
-            if (d < 0) o = Math.max(o, 0.6f);
-            // glint
-            float gl = (hx + 0.42f) * (hx + 0.42f) * 9 + (hy - 0.48f) * (hy - 0.48f) * 22;
-            if (d < -0.12f && gl < 1) o = 1;
-            // halo ring of dots
-            float rad = (float) Math.sqrt(hx * hx + hy * hy), ang = (float) Math.atan2(hy, hx);
-            if (Math.abs(rad - 1.85f) < 0.07f && Math.abs(Math.sin(ang * 7)) > 0.86f) o = Math.max(o, 0.85f);
+        float[] tc = HEART_T, rr = HEART_R;
+        float hd = heartField(w, t);
+        if (hd < 0.5f) {
+            o = hd > 0.1f ? 0 : hd > -0.1f ? 1 : hd > -0.22f ? 0.35f : 0.8f;
         }
         // beads strung between the hearts
         if (t > 0.13f && t < 0.80f) {

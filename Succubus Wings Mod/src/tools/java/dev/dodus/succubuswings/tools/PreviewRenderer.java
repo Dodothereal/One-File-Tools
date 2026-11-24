@@ -35,6 +35,7 @@ public final class PreviewRenderer {
         if (what.equals("all") || what.equals("hero")) hero();
         if (what.equals("all") || what.equals("palettes")) palettes();
         if (what.equals("all") || what.equals("anim")) anim();
+        if (what.equals("video")) video(args);
     }
 
     // ---------------------------------------------------------------- scenes
@@ -42,7 +43,7 @@ public final class PreviewRenderer {
     record State(String name, String label, float bodyPitch, float warm, float span, BiConsumer<WingInput, Float> script) { }
 
     static final State[] STATES = {
-            new State("idle", "Standing idle (breathing, finger drift)", 0, 4.0f, 2.4f, (in, t) -> { }),
+            new State("idle", "Standing idle (breathing, finger drift)", 0, 6.0f, 3.7f, (in, t) -> { }),
             new State("stretch", "Idle flourish: slow stretch and shiver", 0, 2f, 3.6f, (in, t) -> { }),
             new State("walk", "Walking", 0, 3, 1.2f, (in, t) -> in.forward = 4.3f),
             new State("sprint", "Sprinting", 0, 3, 1.0f, (in, t) -> { in.forward = 5.6f; in.sprinting = true; }),
@@ -55,11 +56,11 @@ public final class PreviewRenderer {
             }),
             new State("hover", "Creative flight, hovering (one full flap)", 0, 4, 0.645f, (in, t) -> { in.flying = true; in.onGround = false; }),
             new State("fly", "Creative flight, flying forward fast", 0.35f, 4, 0.40f, (in, t) -> { in.flying = true; in.onGround = false; in.forward = 10.8f; in.sprinting = true; }),
-            new State("glide", "Elytra gliding, banking", 1.35f, 4, 1.6f, (in, t) -> { in.gliding = true; in.onGround = false; in.forward = 22; in.yawRate = 70 * (float) Math.sin(t * 2.2f); }),
+            new State("glide", "Elytra gliding, banking", 1.35f, 4, 1.6f, (in, t) -> { in.gliding = true; in.onGround = false; in.forward = 22; in.yawRate = 45 * (float) Math.sin(t * 2.2f); }),
             new State("fall", "Falling (wings parachute, edges flutter)", 0, 2, 0.8f, (in, t) -> { in.onGround = false; in.up = -18; }),
-            new State("swim", "Swimming (half-folded, trailing and swaying)", 1.45f, 3, 1.2f, (in, t) -> { in.swimming = true; in.inWater = true; in.onGround = false; in.forward = 3.5f; }),
-            new State("hurt", "Taking damage (flinch)", 0, 3, 0.7f, (in, t) -> in.hurt = t > 3.05f ? Math.max(0, 1 - (t - 3.05f) * 2) : 0),
-            new State("attack", "Attacking (wing snaps forward)", 0, 3, 0.6f, (in, t) -> in.attack = t > 3.05f && t < 3.35f ? (t - 3.05f) / 0.3f : 0),
+            new State("swim", "Swimming (swept back along the body, sculling)", 1.45f, 3, 1.2f, (in, t) -> { in.swimming = true; in.inWater = true; in.onGround = false; in.forward = 3.5f; }),
+            new State("hurt", "Taking damage (wings snap shut, tremble, release)", 0, 3, 1.5f, (in, t) -> in.hurt = t > 3.05f ? Math.max(0, 1 - (t - 3.05f) * 2) : 0),
+            new State("attack", "Attacking (wind-up, both wings whip forward)", 0, 3, 0.9f, (in, t) -> in.attack = t > 3.05f && t < 3.35f ? (t - 3.05f) / 0.3f : 0),
     };
 
     static State state(String n) {
@@ -151,7 +152,7 @@ public final class PreviewRenderer {
         // top of the upstroke: fully open
         WingAnimator open = simulate(hover, 4.0f + 0.60f);
         save(label(render(open, c, 0, 1600, 1000, 0, 8, 6.4f, 0, 0.35f, 40), "Hovering, wings open - back view"), "hero_back.png");
-        save(label(render(open, c, 0, 1600, 1000, 38, 14, 6.4f, 0, 0.35f, 40), "Hovering - three-quarter back view"), "hero_34.png");
+        save(label(render(open, c, 0, 1600, 1000, 38, 14, 6.4f, -0.9f, 0.35f, 40), "Hovering - three-quarter back view"), "hero_34.png");
         save(label(render(open, c, 0, 1600, 1000, 180, 6, 6.4f, 0, 0.35f, 40), "Hovering - front view (inner membrane)"), "hero_front.png");
         save(label(render(open, c, 0, 1600, 1000, 90, 5, 6.0f, 0, 0.3f, 40), "Hovering - side view"), "hero_side.png");
         save(label(render(open, c, 0, 1600, 1000, 0, 80, 6.6f, 0, 0.0f, 40), "Hovering - top view"), "hero_top.png");
@@ -193,12 +194,46 @@ public final class PreviewRenderer {
                 String tag = String.format("t = %.2fs", s.span * f / frames);
                 boolean prone = Math.abs(s.bodyPitch) > 0.5f;
                 boolean folded = java.util.Set.of("idle", "walk", "sprint", "sneak", "hurt", "attack").contains(s.name);
-                float dist = folded ? 4.7f : 6.6f, p0 = prone ? 62 : 10, p1 = prone ? 40 : 16, ty = folded ? 0.1f : 0.2f;
+                float dist = folded ? 4.7f : prone ? 7.6f : 6.6f, p0 = prone ? 80 : 10, p1 = prone ? 40 : 16, ty = folded ? 0.1f : 0.2f;
                 g.drawImage(label(render(an, c, s.bodyPitch, cw, ch, 0, p0, dist, 0, ty, 40), tag), (f % 4) * cw, 40 + (f / 4) * ch, null);
                 g.drawImage(label(render(an, c, s.bodyPitch, cw, ch, 50, p1, dist, 0, ty, 40), tag), (f % 4) * cw, 40 + (2 + f / 4) * ch, null);
             }
             g.dispose();
             save(sheet, "anim_" + s.name + ".png");
+        }
+    }
+
+    /** video [state...] : 30 fps frames of every state (back view and three-quarter view side by side) under video/<state>/. */
+    static void video(String[] a) throws Exception {
+        WingConfig c = cfg(Palette.PRESETS.get(0).id);
+        java.util.Set<String> only = new java.util.HashSet<>(java.util.Arrays.asList(a).subList(2, a.length));
+        for (State s : STATES) {
+            if (!only.isEmpty() && !only.contains(s.name)) continue;
+            File dir = new File(out, "video/" + s.name);
+            dir.mkdirs();
+            WingAnimator an = new WingAnimator(7);
+            if (s.name.equals("stretch")) an.idleEvents = false;
+            boolean prone = Math.abs(s.bodyPitch) > 0.5f, fired = false;
+            float dt = 1 / 120f, len = Math.max(4f, Math.min(6f, s.span * 2.5f)), start = Math.max(0, s.warm - 0.6f);
+            int cw = 640, ch = 480, n = 0;
+            for (int i = 0; i * dt <= start + len; i++) {
+                float t = i * dt;
+                WingInput in = new WingInput();
+                // loop one-shot scripts so the reaction is seen more than once
+                float ts = s.name.equals("jump") || s.name.equals("hurt") || s.name.equals("attack") ? (t < s.warm - 1 ? t : s.warm - 1 + (t - s.warm + 1) % 2f) : t;
+                s.script.accept(in, ts);
+                if (s.name.equals("stretch") && !fired && t >= s.warm) { an.triggerEvent(1); fired = true; }
+                an.update(in, t, 1f);
+                if (t < start || i % 4 != 0) continue;
+                float dist = prone ? 6.8f : (s.name.equals("idle") || s.name.equals("walk") || s.name.equals("sneak") || s.name.equals("hurt")) ? 4.4f : 5.6f;
+                BufferedImage f = new BufferedImage(cw * 2, ch, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g = f.createGraphics();
+                g.drawImage(render(an, c, s.bodyPitch, cw, ch, 0, prone ? 80 : 10, dist, 0, 0.1f, 40), 0, 0, null);
+                g.drawImage(render(an, c, s.bodyPitch, cw, ch, 50, prone ? 40 : 16, dist, 0, 0.1f, 40), cw, 0, null);
+                g.dispose();
+                ImageIO.write(label(f, s.label), "png", new File(dir, String.format("%04d.png", n++)));
+            }
+            System.out.println("wrote video/" + s.name + " (" + n + " frames)");
         }
     }
 

@@ -14,11 +14,11 @@ public final class WingAnimator {
     // state indices
     private static final int IDLE = 0, WALK = 1, SPRINT = 2, SNEAK = 3, HOVER = 4, FLY = 5, GLIDE = 6, FALL = 7, RISE = 8, SWIM = 9, SLEEP = 10, RIDE = 11, STATES = 12;
     //                                         idle   walk   sprint sneak  hover  fly    glide  fall   rise   swim   sleep  ride
-    public static final float[] P_SPREAD = {0.30f, 0.27f, 0.40f, 0.50f, 0.96f, 1.00f, 1.00f, 0.86f, 0.52f, 0.86f, 0.10f, 0.22f};
-    public static final float[] P_SWEEP = {30, 35, 30, -50, 16, 26, 12, 36, 48, 20, 8, 38};
-    public static final float[] P_RAISE = {0, -2, 10, 0, 9, 5, -15, 24, -14, -12, -4, -3};
-    public static final float[] P_TWIST = {0, 2, 6, 0, -4, 6, 0, -10, 10, 4, 0, 2};
-    public static final float[] P_CURL = {12, 15, 10, 45, 13, 12, 15, -16, 22, 12, -30, 14};
+    public static final float[] P_SPREAD = {0.30f, 0.27f, 0.40f, 0.85f, 0.96f, 1.00f, 1.00f, 0.86f, 0.52f, 0.80f, 0.10f, 0.22f};
+    public static final float[] P_SWEEP = {30, 35, 30, -30, 16, 26, -14, 36, 48, -8, 8, 38};
+    public static final float[] P_RAISE = {0, -2, 10, -12, 9, 5, 4, 24, -14, -50, -4, -3};
+    public static final float[] P_TWIST = {0, 2, 6, -14, -4, 6, 0, -10, 10, 4, 0, 2};
+    public static final float[] P_CURL = {12, 15, 10, -100, 13, 12, 0, -16, 22, 4, -30, 14};
 
     public final WingPose[] pose = {new WingPose(), new WingPose()};
     public final WingSkeleton[] skeleton = {new WingSkeleton(), new WingSkeleton()};
@@ -62,7 +62,7 @@ public final class WingAnimator {
     private float tailYaw, tailYawV, tailLift, tailLiftV, tailPhase;
 
     // idle events
-    private static final int EV_NONE = 0, EV_STRETCH = 1, EV_FLUTTER = 2, EV_TWITCH = 3, EV_SHUDDER = 4, EV_FLINCH = 5, EV_LAUNCH = 6;
+    private static final int EV_NONE = 0, EV_STRETCH = 1, EV_FLUTTER = 2, EV_TWITCH = 3, EV_SHUDDER = 4, EV_FLINCH = 5, EV_LAUNCH = 6, EV_ATTACK = 7;
     private int event = EV_NONE, eventSide, eventCount;
     private float eventT, eventDur, nextEvent = 3.5f;
     private int forcedEvent = EV_NONE;
@@ -161,11 +161,10 @@ public final class WingAnimator {
             }
         }
         if (in.flying && !wasFlying) startEvent(EV_LAUNCH, 0.9f, 0);
-        if (in.hurt > 0.5f && lastHurt <= 0.5f) startEvent(EV_FLINCH, 1.0f, 0);
-        if (in.attack > 0.02f && lastAttack <= 0.02f) {
-            lagSweepV[RIGHT] -= 9.5f; lagSweepV[LEFT] -= 3.2f;
-            spreadV[RIGHT] += 7.5f; spreadV[LEFT] += 2.6f; lagRaiseV[RIGHT] += 3.5f;
-            lagCurlV[RIGHT] -= 7f; lagCurlV[LEFT] -= 2f;
+        if (in.hurt > 0.5f && lastHurt <= 0.5f) startEvent(EV_FLINCH, 1.5f, 0);
+        if (in.attack > 0.02f && lastAttack <= 0.02f && event != EV_FLINCH) {
+            startEvent(EV_ATTACK, 0.8f, 0);
+            tailYawV += (Noise.hash(++eventCount, seed + 9) < 0.5f ? -1 : 1) * 14f;
         }
         if (!in.onGround) { lastAir = airTime; landV = in.up; }
         wasOnGround = in.onGround;
@@ -248,14 +247,29 @@ public final class WingAnimator {
                     evSpread = 0.05f * (float) Math.sin(Math.PI * u);
                 }
                 case EV_FLINCH -> {
-                    float env = (float) Math.exp(-u * 3.2f) * clamp01(u / 0.08f);
-                    float snap = (float) Math.exp(-u * 9f) * clamp01(u / 0.05f);
-                    evSpread = 0.55f * snap - 0.5f * bSpread * (env - snap) + 0.10f * env;
-                    evCurl = -42 * D * env;
-                    evRaise = 16 * D * snap - 9 * D * (env - snap);
-                    evSweep[0] = -24 * D * env; evSweep[1] = -13 * D * env;
-                    evTwist = 12 * D * env * (float) Math.sin(u * 22f);
-                    evShiver = env * 1.6f;
+                    // snap shut around the body, tremble, then let go slowly
+                    float env = clamp01(u / 0.07f) * (1 - smooth(clamp01((u - 0.45f) / 0.55f)));
+                    evSpread = env * (0.46f - bSpread);
+                    evSweep[0] = evSweep[1] = env * (-22 * D - bSweep);
+                    evCurl = env * (-80 * D - bCurl);
+                    evRaise = env * (-40 * D - bRaise);
+                    evTwist = 9 * D * env * (float) Math.sin(u * eventDur * 38f);
+                    evShiver = env * 2.2f;
+                    evGlow = 0.9f * (float) Math.exp(-u * 6f);
+                }
+                case EV_ATTACK -> {
+                    // wind-up backwards, then both wings whip forward; the springs give the overshoot and snap back
+                    float wind = bump(u, 0.12f, 0.09f), hit = clamp01((u - 0.22f) / 0.10f) * (1 - smooth(clamp01((u - 0.42f) / 0.3f)));
+                    float air = 1 - 0.6f * clamp01(flapAmp);
+                    for (int s = 0; s < 2; s++) {
+                        float lead = s == RIGHT ? 1 : 0.72f;
+                        evSweep[s] = (16 * wind - 62 * hit * lead) * D * air;
+                    }
+                    evSpread = (-0.10f * wind + hit * (0.80f - bSpread)) * air;
+                    evCurl = (14 * wind - 34 * hit) * D * air;
+                    evRaise = (-5 * wind + 13 * hit) * D * air;
+                    evFan = 0.05f * hit;
+                    evGlow = 0.7f * hit;
                 }
                 case EV_LAUNCH -> {
                     float env = (float) Math.sin(Math.PI * Math.min(1, u * 1.15f));
@@ -279,12 +293,12 @@ public final class WingAnimator {
         float h = dt / steps;
         for (int s = 0; s < 2; s++) {
             float sideSign = s == RIGHT ? 1 : -1;
-            float tSpread = clamp01(bSpread + calmW * 0.085f * breathe + weight[SWIM] * 0.22f * (float) Math.sin(t * 2 * Math.PI * 0.8f - 1.1f) + evSpread - weak * 0.05f
+            float tSpread = clamp01(bSpread + calmW * 0.12f * breathe + weight[SWIM] * 0.10f * (float) Math.sin(t * 2 * Math.PI * 0.8f - 1.1f) + evSpread - weak * 0.05f
                     + weight[FALL] * 0.07f * (float) Math.sin(t * 2 * Math.PI * 1.15f + s * 2.1f));
-            float tSweep = bSweep + calmW * 5.5f * D * Noise.smooth(t * 0.33f + s * 17, seed) - calmW * 3.5f * D * breathe + swimSway * 16 * D + evSweep[s]
-                    + weight[FALL] * 9 * D * (float) Math.sin(t * 2 * Math.PI * 1.45f + s * 1.7f) + weight[SNEAK] * 5 * D * (float) Math.sin(t * 2 * Math.PI * 0.45f + s * 2.4f);
-            float tRaise = bRaise + calmW * 4.5f * D * breathe + evRaise - weak * 7 * D + smStrafe * sideSign * 1.1f * D * (1 - flapAmp * 0.5f)
-                    + weight[FALL] * 8 * D * (float) Math.sin(t * 2 * Math.PI * 1.9f + s * 2.6f) + weight[GLIDE] * 3.5f * D * (float) Math.sin(t * 2 * Math.PI * 0.6f + s * 1.3f);
+            float tSweep = bSweep + calmW * 5.5f * D * Noise.smooth(t * 0.33f + s * 17, seed) - calmW * 3.5f * D * breathe + swimSway * 5 * D + evSweep[s]
+                    + weight[FALL] * 9 * D * (float) Math.sin(t * 2 * Math.PI * 1.45f + s * 1.7f) + weight[SNEAK] * 6 * D * (float) Math.sin(t * 2 * Math.PI * 0.45f);
+            float tRaise = bRaise + swimSway * 13 * D + calmW * 6f * D * breathe + evRaise - weak * 7 * D + smStrafe * sideSign * 1.1f * D * (1 - flapAmp * 0.5f)
+                    + weight[FALL] * 12 * D * (float) Math.sin(t * 2 * Math.PI * 1.9f + s * 2.6f) + weight[GLIDE] * 3.5f * D * (float) Math.sin(t * 2 * Math.PI * 0.6f + s * 1.3f);
             float tCurl = bCurl + evCurl + calmW * 7 * D * Noise.smooth(t * 0.41f + s * 5 + 40, seed) + swimSway * 14 * D;
             if (first) { spread[s] = tSpread; sweep[s] = tSweep; raise[s] = tRaise; curl[s] = tCurl; }
             // drive of the inertial springs: air drag from the body's motion
@@ -322,30 +336,30 @@ public final class WingAnimator {
             float upFold = Math.max(0, -vel);
             float bank = clamp(smYaw / 90f, -1, 1) * sideSign;
             p.spread = clamp01(spread[s] - flapAmp * 0.30f * (float) Math.pow(Math.max(0, vel), 1.3) + flapAmp * 0.04f * upFold
-                    - weight[GLIDE] * 0.22f * Math.max(0, bank));
-            p.sweep = sweep[s] + lagSweep[s] + flapAmp * 31 * D * stroke + weight[GLIDE] * (3 * D * Noise.smooth(t * 0.5f + s * 9, seed) + 16 * D * bank)
-                    + walkBob * 6.5f * D + clamp(hSpeed, 0, 12) * 0.9f * D * (1 - flapAmp) * (1 - weight[GLIDE]);
-            p.raise = raise[s] + lagRaise[s] + flapAmp * 17 * D * (float) Math.cos(ph - 0.45f) + walkBob * sideSign * 3.0f * D + Math.abs(walkBob) * 4.0f * D * (weight[WALK] + weight[SPRINT]) + shiver * 1.4f * D
+                    - weight[GLIDE] * 0.07f * Math.max(0, bank));
+            p.sweep = sweep[s] + lagSweep[s] + flapAmp * 31 * D * stroke + weight[GLIDE] * (3 * D * Noise.smooth(t * 0.5f + s * 9, seed) + 9 * D * bank)
+                    + walkBob * (3f + 7f * sideSign) * D + clamp(hSpeed, 0, 12) * 0.9f * D * (1 - flapAmp) * (1 - weight[GLIDE]);
+            p.raise = raise[s] + lagRaise[s] + flapAmp * 17 * D * (float) Math.cos(ph - 0.45f) + walkBob * sideSign * 5.5f * D + Math.abs(walkBob) * 4.0f * D * (weight[WALK] + weight[SPRINT]) + shiver * 1.4f * D
                     + weight[GLIDE] * 16 * D * bank;
             p.twist = bTwist + evTwist + weight[GLIDE] * 15 * D * bank + weight[FALL] * 5 * D * (float) Math.sin(t * 2 * Math.PI * 1.3f + s * 2.9f) + flapAmp * 20 * D * (float) Math.sin(ph) + shiver * 1.2f * D - lagSweep[s] * 0.25f;
             p.armBend = flapAmp * 13 * D * (float) Math.sin(ph - 0.35f) + lagCurl[s] * 0.25f;
             p.curl = curl[s] + lagCurl[s] * 0.75f + flapAmp * 40 * D * (float) Math.sin(ph - 0.75f);
-            p.curlTip = (weight[WALK] + weight[SPRINT]) * 13 * D * (float) Math.sin(t * 2 * Math.PI * (1.7f + 0.25f * hSpeed) - 1.3f) + swimSway * 10 * D + flapAmp * 42 * D * (float) Math.sin(ph - 1.35f) + lagCurl[s] * 0.9f + weight[GLIDE] * (20 + 9 * (float) Math.sin(t * 2 * Math.PI * 0.7f + s * 1.9f) + 14 * Math.max(0, -bank)) * D + shiver * 3 * D
+            p.curlTip = (weight[WALK] + weight[SPRINT]) * 13 * D * (float) Math.sin(t * 2 * Math.PI * (1.7f + 0.25f * hSpeed) - 1.3f) + swimSway * 10 * D + flapAmp * 42 * D * (float) Math.sin(ph - 1.35f) + lagCurl[s] * 0.9f + weight[GLIDE] * (-10 + 9 * (float) Math.sin(t * 2 * Math.PI * 0.7f + s * 1.9f) - 10 * Math.max(0, -bank)) * D + shiver * 3 * D
                     + weight[FALL] * -14 * D * (1 + 0.6f * (float) Math.sin(t * 2 * Math.PI * 2.3f + s));
             p.fan = evFan + calmW * 0.035f * breathe + flapAmp * 0.05f * upFold;
             for (int f = 0; f < WingPose.FINGERS; f++) {
                 float slow = Noise.smooth(t * 0.37f + f * 13.7f + s * 71.3f, seed);
                 float quick = Noise.smooth(t * 1.9f + f * 3.1f + s * 11.9f, seed + 7);
-                p.fingerFlex[f] = (calmW * (8.5f * slow + 2.2f * quick) + shiver * (f % 2 == 0 ? 1.6f : -1.6f)) * D + evFlex[s][f]
-                        + (weight[GLIDE] * 6f + weight[FALL] * 11f) * D * quick + fLag[s][f] * 0.35f + walkBob * (f - 2) * 1.2f * D;
+                p.fingerFlex[f] = (calmW * (12f * slow + 3.2f * quick + 3.5f * (float) Math.sin(t * 2 * Math.PI * 0.27f + seed - 0.9f * f)) + shiver * (f % 2 == 0 ? 1.6f : -1.6f)) * D + evFlex[s][f]
+                        + (weight[GLIDE] * 6f + weight[FALL] * 17f) * D * quick + fLag[s][f] * 0.35f + walkBob * (f - 2) * 1.2f * D;
                 p.fingerCurl[f] = fLag[s][f] * 0.9f + (calmW * 14f * Noise.smooth(t * 0.39f + f * 7.3f + s * 23.1f, seed + 3)) * D
                         + flapAmp * 13 * D * (float) Math.sin(ph - 0.75f - 0.22f * f) * (0.35f * f);
                 float air = flapAmp * 0.21f * (float) Math.sin(ph - 0.25f - 0.12f * f);
                 float wind = (weight[SPRINT] * 0.09f + weight[FALL] * -0.17f + weight[GLIDE] * -0.11f + weight[RISE] * 0.10f + weight[SWIM] * 0.05f);
                 p.billow[f] = air + wind * (1 + 0.35f * quick) + 0.05f * walkBob * (weight[WALK] + weight[SPRINT]) + 0.035f * calmW * Noise.smooth(t * 0.6f + f * 5.1f + s * 3.3f, seed + 11) - lagCurl[s] * 0.06f - fLag[s][f] * 0.11f
-                        + weight[FALL] * 0.09f * (float) Math.sin(t * 2 * Math.PI * 2.4f - f * 1.1f + s) + weight[GLIDE] * 0.05f * (float) Math.sin(t * 2 * Math.PI * 1.6f - f * 0.9f + s * 2);
+                        + weight[FALL] * 0.15f * (float) Math.sin(t * 2 * Math.PI * 2.4f - f * 1.1f + s) + weight[GLIDE] * 0.05f * (float) Math.sin(t * 2 * Math.PI * 1.6f - f * 0.9f + s * 2);
             }
-            float flutter = weight[GLIDE] * 0.085f + weight[FALL] * 0.13f + weight[SPRINT] * 0.035f + weight[WALK] * 0.012f + weight[FLY] * 0.035f + weight[HOVER] * 0.016f + weight[SWIM] * 0.03f + calmW * 0.006f
+            float flutter = weight[GLIDE] * 0.085f + weight[FALL] * 0.21f + weight[SPRINT] * 0.075f + weight[WALK] * 0.012f + weight[FLY] * 0.035f + weight[HOVER] * 0.016f + weight[SWIM] * 0.03f + calmW * 0.006f
                     + clamp01(hSpeed / 20f) * 0.01f + evShiver * 0.03f;
             p.ripple = flutter;
             p.ripplePhase = ripplePhase + s * 1.7f;
@@ -368,13 +382,13 @@ public final class WingAnimator {
     private void updateTail(WingInput in, float dt, float t, float hSpeed, float accF, float size, float flapAmp, float stroke) {
         float calmW = weight[IDLE] + weight[SNEAK] + weight[RIDE] + weight[SLEEP];
         float moveW = weight[WALK] + weight[SPRINT];
-        float hz = 0.33f * calmW + 0.95f * weight[WALK] + 1.5f * weight[SPRINT] + 0.55f * (weight[HOVER] + weight[RISE]) + 0.9f * (weight[FLY] + weight[GLIDE] + weight[FALL]) + 0.8f * weight[SWIM];
+        float hz = 0.42f * calmW + 0.95f * weight[WALK] + 1.5f * weight[SPRINT] + 0.55f * (weight[HOVER] + weight[RISE]) + 0.9f * (weight[FLY] + weight[GLIDE] + weight[FALL]) + 0.8f * weight[SWIM];
         tailPhase += dt * hz * (float) (2 * Math.PI);
         if (tailPhase > 1800) tailPhase -= (float) (2 * Math.PI) * 280;
-        float sway = (24 * calmW + 30 * weight[WALK] + 16 * weight[SPRINT] + 20 * weight[HOVER] + 12 * (weight[FLY] + weight[GLIDE]) + 30 * weight[FALL] + 34 * weight[SWIM] + 18 * weight[RISE]) * D;
+        float sway = (30 * calmW + 34 * weight[WALK] + 30 * weight[SPRINT] + 20 * weight[HOVER] + 24 * (weight[FLY] + weight[GLIDE]) + 30 * weight[FALL] + 34 * weight[SWIM] + 18 * weight[RISE]) * D;
         // base direction of the tail root, angle above "straight back" in the body's y-z plane
-        float droop = (-58 * calmW - 46 * weight[WALK] - 16 * weight[SPRINT] - 76 * weight[HOVER] - 50 * weight[FLY] - 84 * (weight[GLIDE] + weight[SWIM]) + 38 * weight[FALL] - 70 * weight[RISE]) * D;
-        float curlUp = (128 * calmW + 100 * weight[WALK] + 42 * weight[SPRINT] + 118 * weight[HOVER] + 60 * weight[FLY] + 26 * (weight[GLIDE] + weight[SWIM]) + 52 * weight[FALL] + 30 * weight[RISE]) * D;
+        float droop = (-58 * calmW - 46 * weight[WALK] - 8 * weight[SPRINT] - 76 * weight[HOVER] - 50 * weight[FLY] - 84 * (weight[GLIDE] + weight[SWIM]) + 38 * weight[FALL] - 70 * weight[RISE]) * D;
+        float curlUp = (128 * calmW + 100 * weight[WALK] + 62 * weight[SPRINT] + 118 * weight[HOVER] + 75 * weight[FLY] + 40 * (weight[GLIDE] + weight[SWIM]) + 52 * weight[FALL] + 30 * weight[RISE]) * D;
         float steps = Math.max(1, (float) Math.ceil(dt / 0.008f)), h = dt / steps;
         float driveYaw = -smYaw * D * 0.9f - smStrafe * 0.05f, driveLift = -smUp * 0.035f + accF * 0.006f;
         for (int i = 0; i < steps; i++) {
@@ -392,7 +406,7 @@ public final class WingAnimator {
             tail[k * 3] = x; tail[k * 3 + 1] = y; tail[k * 3 + 2] = z;
             float u = (k + 0.5f) / (TAIL_POINTS - 1);
             float theta = droop + curlUp * (float) Math.pow(u, 1.7) + tailLift * (0.3f + u) + 14 * D * flapAmp * stroke * u
-                    + moveW * 9 * D * (float) Math.sin(2 * tailPhase - 3.2f * u) * u + 10 * D * flick * u * u;
+                    + (moveW * 14 + calmW * 9 + 10 * (weight[FLY] + weight[GLIDE] + weight[HOVER])) * D * (float) Math.sin(2 * tailPhase - 3.2f * u) * u + 22 * D * flick * u * u;
             float phi = sway * (float) Math.sin(tailPhase - 3.4f * u) * (0.25f + 0.75f * u) + tailYaw * (0.35f + 0.9f * u)
                     + (calmW + 0.5f * weight[HOVER]) * 26 * D * flick2 * u * u * u;
             // leave the body backwards before the curve takes over

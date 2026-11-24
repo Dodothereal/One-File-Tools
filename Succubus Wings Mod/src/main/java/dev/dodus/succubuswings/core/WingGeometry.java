@@ -72,7 +72,7 @@ public final class WingGeometry {
     private void buildPanel(WingSkeleton sk, WingPose pose, WingConfig cfg, Palette pal, int i, float size, WingMesh mesh) {
         float[] A = sk.finger[i], B = i == 4 ? sk.bodyLine : sk.finger[i + 1];
         float[] N = sk.axisN;
-        float billow = (pose.billow[i] + 0.06f) * size;
+        float billow = (pose.billow[i] + 0.13f) * size;
         float tearA = TEAR[i], tearB = TEAR[(i + 2) % 5] * 0.55f + 0.3f;
         for (int j = 0; j <= GT; j++) {
             float t = j / (float) GT;
@@ -228,7 +228,7 @@ public final class WingGeometry {
             float r0 = (i == 4 ? 0.034f : 0.036f - 0.002f * i) * rs, r1 = 0.0095f * rs;
             for (int k = 0; k <= SEG; k++) {
                 float t = k / (float) SEG;
-                float knuckle = 0.55f * bump(t, 0.0f, 0.05f) + 0.42f * bump(t, 0.36f, 0.032f) + 0.36f * bump(t, 0.68f, 0.03f);
+                float knuckle = 0.75f * bump(t, 0.0f, 0.05f) + 0.8f * bump(t, 0.36f, 0.03f) + 0.7f * bump(t, 0.68f, 0.028f);
                 float r = (r0 + (r1 - r0) * (float) Math.pow(t, 0.8)) * (1 + knuckle) * ((k & 1) == 0 ? 1.07f : 0.93f);
                 ringPts[k * 3] = F[k * 3]; ringPts[k * 3 + 1] = F[k * 3 + 1]; ringPts[k * 3 + 2] = F[k * 3 + 2];
                 ringRad[k] = r;
@@ -309,7 +309,7 @@ public final class WingGeometry {
                 float[] p = lerp3(sk.elbow, sk.wrist, 0.52f + 0.07f * k);
                 arm[k * 3] = p[0]; arm[k * 3 + 1] = p[1]; arm[k * 3 + 2] = p[2];
                 ringRad[k] = (0.057f + 0.008f * (k == 0 || k == 4 ? 1 : 0) + 0.004f * (k == 2 ? 1 : 0)) * rs;
-                rgb(k, pal.accent, k % 2 == 0 ? 1.25f : 0.6f);
+                rgb(k, pal.accent, 1.45f * (k % 2 == 0 ? 1.25f : 0.6f));
                 ringAlong[k] = k / 4f;
             }
             tube(mesh.solid, 5, sk.axisN, METAL_U0, METAL_U1, 1f);
@@ -323,7 +323,7 @@ public final class WingGeometry {
         for (int k = 0; k < points; k++) {
             ringPts[k * 3] = chain[k * 3]; ringPts[k * 3 + 1] = chain[k * 3 + 1]; ringPts[k * 3 + 2] = chain[k * 3 + 2];
             ringRad[k] = 0.0075f * (1 + 0.5f * (k & 1));
-            rgb(k, pal.accent, (k & 1) == 0 ? 1f : 0.7f);
+            rgb(k, pal.accent, 1.45f * ((k & 1) == 0 ? 1f : 0.7f));
             ringAlong[k] = k / (float) (points - 1);
         }
         float[] up = {0, 0, 1};
@@ -334,22 +334,13 @@ public final class WingGeometry {
         float dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (dl < 1e-5f) { dx = 0; dy = -1; dz = 0; dl = 1; }
         dx /= dl; dy /= dl; dz /= dl;
-        float gs = 0.034f * (float) Math.pow(size, 0.6);
-        float[] pts = {0, 0.35f, 0.5f, 1.25f, 2.3f};
-        float[] rad = {0.0f, 0.75f, 1.0f, 0.6f, 0.0f};
-        for (int k = 0; k < 5; k++) {
-            ringPts[k * 3] = chain[e] + dx * gs * pts[k]; ringPts[k * 3 + 1] = chain[e + 1] + dy * gs * pts[k]; ringPts[k * 3 + 2] = chain[e + 2] + dz * gs * pts[k];
-            ringRad[k] = gs * rad[k] * 0.8f;
-            rgb(k, pal.gem, 0.75f + 0.25f * (k % 2));
-            ringAlong[k] = k / 4f;
-        }
-        tubeSides = 4;
-        tube(mesh.solid, 5, up, GEM_U0, GEM_U1, flip);
-        if (cfg.glow > 0.01f) {
-            for (int k = 0; k < 5; k++) { ringRad[k] *= 1.12f; rgb(k, pal.glow, Math.min(1, 0.45f * cfg.glow)); }
-            tube(mesh.glow, 5, up, GEM_U0, GEM_U1, flip);
-        }
-        tubeSides = SIDES;
+        float gs = 0.105f * (float) Math.pow(size, 0.6);
+        float lx = -dy, ly = dx, lz = 0, ll = (float) Math.sqrt(lx * lx + ly * ly);
+        if (ll < 1e-3f) { lx = 1; ly = 0; ll = 1; }
+        lx /= ll; ly /= ll;
+        float[] o = {chain[e] + dx * gs * 0.3f, chain[e + 1] + dy * gs * 0.3f, chain[e + 2] + dz * gs * 0.3f}, dd = {dx, dy, dz}, la = {lx, ly, lz},
+                no = {dy * lz - dz * ly, dz * lx - dx * lz, dx * ly - dy * lx};
+        heart(mesh, o, dd, la, no, gs, gs * 0.56f, gs * 0.16f, pal.gem, pal, cfg);
         sg = saved;
     }
 
@@ -362,7 +353,7 @@ public final class WingGeometry {
             sample(F, t + off[k] * halfLen, pa);
             ringPts[k * 3] = pa[0]; ringPts[k * 3 + 1] = pa[1]; ringPts[k * 3 + 2] = pa[2];
             ringRad[k] = radius * rr[k];
-            rgb(k, rgb, li[k]);
+            rgb(k, rgb, 1.45f * li[k]);
             ringAlong[k] = k / 8f;
         }
         float[] up = {0.2f, 0.3f, 1};
@@ -419,7 +410,7 @@ public final class WingGeometry {
                 ringPts[k * 3 + 1] = a[1] + (b[1] - a[1]) * t + gy * s4;
                 ringPts[k * 3 + 2] = a[2] + (b[2] - a[2]) * t + gz * s4 - 0.03f * rs * 4 * t * (1 - t);
                 ringRad[k] = 0.0055f * rs * (1 + 0.6f * (k & 1));
-                rgb(k, pal.accent, (k & 1) == 0 ? 1.15f : 0.65f);
+                rgb(k, pal.accent, 1.45f * ((k & 1) == 0 ? 1.15f : 0.65f));
                 ringAlong[k] = t;
             }
             float[] up = {0.2f, 0.3f, 1};
@@ -470,38 +461,59 @@ public final class WingGeometry {
         if (ll < 1e-3f) { lx = 0; ly = 0; lz = 1; ll = 1; }
         lx /= ll; ly /= ll; lz /= ll;
         float nx = dy * lz - dz * ly, ny = dz * lx - dx * lz, nz = dx * ly - dy * lx;
-        float[] ss = {-0.12f, -0.02f, 0.12f, 0.3f, 0.52f, 0.76f, 1f};
-        float[] ww = {0.42f, 0.86f, 1f, 0.92f, 0.66f, 0.34f, 0.0f};
-        float len = 0.3f * rs, wid = 0.15f * rs, thick = 0.02f * rs;
-        float cr = ((pal.claw >> 16) & 255) / 255f, cg = ((pal.claw >> 8) & 255) / 255f, cb = (pal.claw & 255) / 255f;
+        float[] o = {tail[e], tail[e + 1], tail[e + 2]}, dd = {dx, dy, dz}, la = {lx, ly, lz}, no = {nx, ny, nz};
+        heart(mesh, o, dd, la, no, 0.36f * rs, 0.2f * rs, 0.045f * rs, Palette.mix(pal.claw, pal.gem, 0.72f), pal, cfg);
+        sg = saved;
+    }
+
+    /**
+     * A puffy 3D heart lying in the plane of d (notch at o, point at o + d * len) and l, domed along n,
+     * with a bright rim in the solid layer and a halo in the glow layer.
+     */
+    private void heart(WingMesh mesh, float[] o, float[] d, float[] l, float[] n, float len, float wid, float thick, int rgb, Palette pal, WingConfig cfg) {
+        final int N = 28;
+        float[] ring = {0f, 0.5f, 0.86f, 1f}, dome = {1f, 0.86f, 0.5f, 0.12f}, lit = {1.25f, 1.0f, 0.8f, 1.5f};
+        float cr = ((rgb >> 16) & 255) / 255f, cg = ((rgb >> 8) & 255) / 255f, cb = (rgb & 255) / 255f;
         float gr = ((pal.glow >> 16) & 255) / 255f, gg = ((pal.glow >> 8) & 255) / 255f, gb = (pal.glow & 255) / 255f;
-        float um = (CLAW_U0 + CLAW_U1) * 0.5f, vm = (STRIP_V0 + STRIP_V1) * 0.5f;
+        float um = (GEM_U0 + GEM_U1) * 0.5f, vm = (STRIP_V0 + STRIP_V1) * 0.5f;
         for (int pass = 0; pass < 2; pass++) {
             if (pass == 1 && cfg.glow <= 0.01f) break;
             WingMesh.Layer layer = pass == 0 ? mesh.solid : mesh.glow;
-            float grow = pass == 0 ? 1 : 1.12f;
-            for (int k = 0; k + 1 < ss.length; k++) {
-                for (int j = 0; j < 4; j++) {
-                    int j1 = (j + 1) & 3;
-                    for (int v = 0; v < 4; v++) {
-                        int kk = (v == 0 || v == 1) ? k : k + 1, jj = (v == 0 || v == 3) ? j : j1;
-                        float w = ww[kk] * wid * grow, hgt = thick * (1 - 0.8f * ss[kk]) * grow, a = ss[kk] * len;
-                        float cl = jj == 0 ? w : jj == 2 ? -w : 0, cn = jj == 1 ? hgt : jj == 3 ? -hgt : 0;
-                        float sl = (j == 0 || j == 3) ? 1 : -1, sn = (j == 0 || j == 1) ? 1 : -1;
-                        float fx = lx * thick * sl + nx * wid * sn, fy = ly * thick * sl + ny * wid * sn, fz = lz * thick * sl + nz * wid * sn;
-                        float fl = (float) Math.sqrt(fx * fx + fy * fy + fz * fz);
-                        float edge = jj == 0 || jj == 2 ? 1 : 0;
-                        float r, g, b;
-                        if (pass == 0) { float m = 0.55f + 0.5f * edge; r = cr * m + gr * 0.25f * edge; g = cg * m + gg * 0.25f * edge; b = cb * m + gb * 0.25f * edge; }
-                        else { float m = Math.min(1, 0.5f * cfg.glow) * (0.35f + 0.65f * edge); r = gr * m; g = gg * m; b = gb * m; }
-                        put(tail[e] + dx * a + lx * cl + nx * cn, tail[e + 1] + dy * a + ly * cl + ny * cn, tail[e + 2] + dz * a + lz * cl + nz * cn,
-                                fx / fl, fy / fl, fz / fl, pass == 0 ? um : WHITE_U, pass == 0 ? vm : WHITE_V, r, g, b, 1);
+            float grow = pass == 0 ? 1 : 1.16f, gm = Math.min(1, 0.55f * cfg.glow);
+            for (int k = 0; k < N; k++) {
+                for (int r = 0; r < 3; r++) {
+                    for (int face = -1; face <= 1; face += 2) {
+                        for (int v = 0; v < 4; v++) {
+                            int vv = face > 0 ? v : 3 - v;
+                            int rr = (vv == 0 || vv == 1) ? r : r + 1, kk = (vv == 0 || vv == 3) ? k : k + 1;
+                            heartVert(o, d, l, n, len, wid, thick * face, kk / (float) N, ring[rr] * grow, dome[rr], face,
+                                    pass == 0 ? um : WHITE_U, pass == 0 ? vm : WHITE_V,
+                                    pass == 0 ? cr * lit[rr] + (rr == 3 ? gr * 0.5f : 0) : gr * gm * (0.3f + 0.7f * ring[rr]),
+                                    pass == 0 ? cg * lit[rr] + (rr == 3 ? gg * 0.5f : 0) : gg * gm * (0.3f + 0.7f * ring[rr]),
+                                    pass == 0 ? cb * lit[rr] + (rr == 3 ? gb * 0.5f : 0) : gb * gm * (0.3f + 0.7f * ring[rr]));
+                        }
+                        flush(layer);
                     }
-                    flush(layer);
                 }
             }
         }
-        sg = saved;
+    }
+
+    private void heartVert(float[] o, float[] d, float[] l, float[] n, float len, float wid, float thick, float a, float scale, float dome, float face,
+                           float u, float v, float r, float g, float b) {
+        double th = a * 2 * Math.PI;
+        float hx = (float) Math.pow(Math.sin(th), 3);
+        float hy = (float) (13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th));
+        // heart-space: notch at along = 0, point at along = 1, centre of mass at about 0.33
+        float al = 0.33f + ((5 - hy) / 22f - 0.33f) * scale, la = hx * scale;
+        float h = thick * dome;
+        float nn = 0.35f + 0.65f * dome, ns = (1 - nn) * 0.9f;
+        float rx = (al - 0.33f), ry = la, rl = (float) Math.sqrt(rx * rx + ry * ry) + 1e-5f;
+        rx /= rl; ry /= rl;
+        float fx = n[0] * nn * face + (d[0] * rx + l[0] * ry) * ns, fy = n[1] * nn * face + (d[1] * rx + l[1] * ry) * ns, fz = n[2] * nn * face + (d[2] * rx + l[2] * ry) * ns;
+        float fl = (float) Math.sqrt(fx * fx + fy * fy + fz * fz);
+        put(o[0] + d[0] * al * len + l[0] * la * wid + n[0] * h, o[1] + d[1] * al * len + l[1] * la * wid + n[1] * h, o[2] + d[2] * al * len + l[2] * la * wid + n[2] * h,
+                fx / fl, fy / fl, fz / fl, u, v, r, g, b, 1);
     }
 
     /** A curved cone starting at (x,y,z) along dir, hooking towards hook. */

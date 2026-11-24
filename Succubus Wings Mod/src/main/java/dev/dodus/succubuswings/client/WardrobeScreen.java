@@ -71,7 +71,28 @@ public final class WardrobeScreen extends Screen {
         hsv[2] = Palette.toHsv(cfg.customGlow);
         int x = width - PANEL - 2, y = 16, w = PANEL - 4;
 
-        addRenderableWidget(toggle(x, y, w, "Wings", () -> cfg.enabled, v -> cfg.enabled = v));
+        int q = (w - 4) / 4;
+        addRenderableWidget(toggle(x, y, 2 * q, "Wings", () -> cfg.enabled, v -> cfg.enabled = v));
+        Flat rnd = new Flat(x + 2 * q + 2, y, q, ROW, Component.literal("Random"), b -> {
+            java.util.Random r = new java.util.Random();
+            float h = r.nextFloat();
+            setCustom(0, h, 0.55f + 0.4f * r.nextFloat(), 0.45f + 0.5f * r.nextFloat());
+            setCustom(1, (h + 0.9f + 0.2f * r.nextFloat()) % 1f, 0.3f + 0.5f * r.nextFloat(), 0.12f + 0.3f * r.nextFloat());
+            setCustom(2, (h + (r.nextBoolean() ? 0.08f : 0.45f) + 0.1f * r.nextFloat()) % 1f, 0.5f + 0.4f * r.nextFloat(), 1f);
+            cfg.scheme = Palette.CUSTOM_ID;
+            rebuildWidgets();
+        }, () -> false);
+        rnd.setTooltip(Tooltip.create(Component.literal("Roll a random custom colour set")));
+        addRenderableWidget(rnd);
+        Flat rst = new Flat(x + 3 * q + 4, y, w - 3 * q - 4, ROW, Component.literal("Reset"), b -> {
+            WingConfig d = new WingConfig();
+            cfg.scheme = d.scheme; cfg.size = d.size; cfg.glow = d.glow;
+            cfg.customMembrane = d.customMembrane; cfg.customBone = d.customBone; cfg.customGlow = d.customGlow;
+            cfg.jewelry = cfg.tail = cfg.particles = cfg.sounds = true;
+            rebuildWidgets();
+        }, () -> false);
+        rst.setTooltip(Tooltip.create(Component.literal("Back to the default look")));
+        addRenderableWidget(rst);
         y += ROW + 14;
 
         // color scheme swatches
@@ -91,14 +112,18 @@ public final class WardrobeScreen extends Screen {
             final int row = r;
             for (int c = 0; c < 3; c++) {
                 final int ch = c;
-                Slider s = new Slider(x + lw + c * (cw + 2), y, cw, 12, () -> (c2(ch)) + Math.round(hsv[row][ch] * 100), hsv[r][c], v -> {
+                Slider s = new Slider(x + lw + c * (cw + 2), y, cw, 12, () -> "", hsv[r][c], v -> {
                     hsv[row][ch] = (float) v;
+                    cfg.scheme = Palette.CUSTOM_ID;
                     int rgb = Palette.hsv(Math.min(0.9999f, hsv[row][0]), hsv[row][1], hsv[row][2]);
                     if (row == 0) cfg.customMembrane = rgb;
                     else if (row == 1) cfg.customBone = rgb;
                     else cfg.customGlow = rgb;
                 });
-                customWidgets.add(s);
+                s.track = u -> ch == 0 ? Palette.hsv(Math.min(0.9999f, u), 0.85f, 1f)
+                        : ch == 1 ? Palette.hsv(Math.min(0.9999f, hsv[row][0]), u, Math.max(0.35f, hsv[row][2]))
+                        : Palette.hsv(Math.min(0.9999f, hsv[row][0]), hsv[row][1], u);
+                s.setTooltip(Tooltip.create(Component.literal(names[r] + (c == 0 ? " hue" : c == 1 ? " saturation" : " brightness"))));
                 addRenderableWidget(s);
             }
             y += 13;
@@ -141,6 +166,13 @@ public final class WardrobeScreen extends Screen {
         }
     }
 
+    private void setCustom(int row, float h, float sat, float v) {
+        int rgb = Palette.hsv(Math.min(0.9999f, h), sat, v);
+        if (row == 0) cfg.customMembrane = rgb;
+        else if (row == 1) cfg.customBone = rgb;
+        else cfg.customGlow = rgb;
+    }
+
     private static String c2(int ch) {
         return ch == 0 ? "H " : ch == 1 ? "S " : "B ";
     }
@@ -155,7 +187,6 @@ public final class WardrobeScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         boolean custom = Palette.CUSTOM_ID.equals(cfg.scheme);
-        for (AbstractWidget w : customWidgets) w.active = custom;
         super.render(g, mouseX, mouseY, partialTick);
 
         int x = width - PANEL - 2;
@@ -163,12 +194,18 @@ public final class WardrobeScreen extends Screen {
         g.drawString(font, cfg.palette().name, 8, 18, 0xff000000 | cfg.palette().glow);
         String scheme = custom ? "Custom" : Palette.byId(cfg.scheme).name;
         g.drawString(font, "Colors: " + scheme, x, 16 + ROW + 3, 0xffe8c8d8);
+        String hex = String.format("#%06X  #%06X  #%06X", cfg.palette().outerEdge & 0xffffff, cfg.palette().boneTip & 0xffffff, cfg.palette().glow & 0xffffff);
+        g.pose().pushPose();
+        g.pose().translate(width - 4 - font.width(hex) * 0.75f, 16 + ROW + 4, 0);
+        g.pose().scale(0.75f, 0.75f, 1);
+        g.drawString(font, hex, 0, 0, 0xff9a86a6, false);
+        g.pose().popPose();
         int cy = hsbY;
         String[] names = {"Skin", "Bone", "Glow"};
         int[] colors = {cfg.customMembrane, cfg.customBone, cfg.customGlow};
         for (int r = 0; r < 3; r++) {
             g.fill(x, cy + r * 13 + 1, x + 4, cy + r * 13 + 11, 0xff000000 | colors[r]);
-            g.drawString(font, names[r], x + 6, cy + r * 13 + 2, custom ? 0xffffffff : 0xff777777, false);
+            g.drawString(font, names[r], x + 6, cy + r * 13 + 2, custom ? 0xffffffff : 0xffb9a6c2, false);
         }
         g.drawString(font, ClientWings.serverHasMod() ? "Other players see your wings" : "Only you see them here (server lacks the mod)",
                 4, 4, ClientWings.serverHasMod() ? 0xff9be89b : 0xffe8c06a);
@@ -239,8 +276,8 @@ public final class WardrobeScreen extends Screen {
         animator.update(in, time, cfg.scale());
 
         // fit: the open wings span roughly 7.5 blocks at size 1
-        float fit = Math.min(previewW / (7.6f * Math.max(1f, cfg.size)), previewH / 4.6f) * 1.22f * zoom;
-        float cx = 4 + previewW / 2f, cyc = 12 + previewH / 2f;
+        float fit = Math.min(previewW / (7.6f * Math.max(1f, cfg.size)), previewH / 4.6f) * 1.5f * zoom;
+        float cx = 4 + previewW / 2f, cyc = 12 + previewH * 0.56f;
         Quaternionf pose = new Quaternionf().rotateZ(Mth.PI).rotateX(pitch * Mth.DEG_TO_RAD - bodyPitch * 0.6f).rotateY(yaw * Mth.DEG_TO_RAD).rotateX(bodyPitch);
         // pivot around chest height instead of the feet
         Vector3f pivot = pose.transform(new Vector3f(0, 1.25f, 0)).negate();
@@ -350,10 +387,13 @@ public final class WardrobeScreen extends Screen {
             g.fill(x1 - 6, mid - 2, x1 - 2, mid + 2, 0xff000000 | p.glow);
             g.fill(x1 - 6, y0 + 2, x1 - 2, y0 + 4, 0xff000000 | p.accent);
             String shortName = getMessage().getString().split(" ")[0];
+            float sc = Math.min(0.75f, (width - 4f) / font.width(shortName));
+            int stripe = Math.round(8 * sc) + 2;
+            g.fill(x0 + 1, y1 - 1 - stripe, x1 - 1, y1 - 1, 0xd0100a14);
             g.pose().pushPose();
-            g.pose().translate(x0 + width / 2f, y0 + height / 2f - 3, 0);
-            g.pose().scale(0.75f, 0.75f, 1);
-            g.drawCenteredString(font, shortName, 0, 0, selected ? 0xffffffff : 0xffe6d6e0);
+            g.pose().translate(x0 + width / 2f, y1 - stripe, 0);
+            g.pose().scale(sc, sc, 1);
+            g.drawCenteredString(font, shortName, 0, 0, 0xffffffff);
             g.pose().popPose();
             if (selected) g.renderOutline(x0 - 1, y0 - 1, width + 2, height + 2, 0xff000000 | p.glow);
         }
@@ -394,6 +434,7 @@ public final class WardrobeScreen extends Screen {
     private static final class Slider extends AbstractSliderButton {
         private final Supplier<String> label;
         private final java.util.function.DoubleConsumer apply;
+        java.util.function.Function<Float, Integer> track;
 
         Slider(int x, int y, int w, int h, Supplier<String> label, double value, java.util.function.DoubleConsumer apply) {
             super(x, y, w, h, Component.literal(label.get()), Mth.clamp(value, 0, 1));
@@ -411,6 +452,15 @@ public final class WardrobeScreen extends Screen {
             int x0 = getX(), y0 = getY(), x1 = x0 + width, y1 = y0 + height;
             int glow = ClientWings.LOCAL.palette().glow & 0xffffff;
             g.fill(x0, y0, x1, y1, 0xff150f1b);
+            if (track != null) {
+                for (int px = x0 + 1; px < x1 - 1; px++)
+                    g.fill(px, y0 + 2, px + 1, y1 - 2, 0xff000000 | track.apply((px - x0 - 1) / (float) (width - 3)));
+                int tx = x0 + 1 + (int) Math.round((width - 3) * value);
+                g.fill(tx - 1, y0, tx + 2, y1, 0xff000000);
+                g.fill(tx, y0, tx + 1, y1, 0xffffffff);
+                g.renderOutline(x0, y0, width, height, isHoveredOrFocused() ? 0xffffffff : 0xff4a3858);
+                return;
+            }
             int fx = x0 + 1 + (int) Math.round((width - 2) * value);
             if (active) g.fillGradient(x0 + 1, y0 + 1, fx, y1 - 1, 0xff000000 | Palette.scale(glow, 0.62f), 0xff000000 | Palette.scale(glow, 0.3f));
             g.fill(Math.max(x0 + 1, fx - 1), y0 + 1, Math.min(x1 - 1, fx + 1), y1 - 1, active ? 0xffffffff : 0xff555555);
