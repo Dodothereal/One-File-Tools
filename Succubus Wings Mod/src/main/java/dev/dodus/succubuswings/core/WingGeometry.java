@@ -165,6 +165,7 @@ public final class WingGeometry {
         for (int n = 0; n < 9; n++) {
             int id = i * 31 + n;
             boolean mote = n >= 6;
+            if (mote && !cfg.particles) continue;
             float h1 = Noise.hash(id, 811), h2 = Noise.hash(id, 823), h3 = Noise.hash(id, 839), h4 = Noise.hash(id, 853);
             float life = 0, bright;
             int j, k;

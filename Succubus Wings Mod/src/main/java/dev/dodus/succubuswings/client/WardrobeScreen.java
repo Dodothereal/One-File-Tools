@@ -349,9 +349,10 @@ public final class WardrobeScreen extends Screen {
     }
 
     @Override
-    public void onClose() {
+    public void removed() {
+        // also runs when another screen (death, disconnect) replaces the wardrobe
         ClientWings.commit();
-        super.onClose();
+        super.removed();
     }
 
     @Override
