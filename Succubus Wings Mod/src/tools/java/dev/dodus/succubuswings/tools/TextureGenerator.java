@@ -21,7 +21,7 @@ import java.util.Random;
  * Run through `./gradlew generateTextures`; the PNGs are committed so the mod build does not need it.
  */
 public final class TextureGenerator {
-    static final int W = 2048, H = 1024;
+    static final int W = 4096, H = 2048, S = 2;
 
     public static void main(String[] args) throws Exception {
         File dir = new File(args.length > 0 ? args[0] : "src/main/resources/assets/succubuswings/textures/entity");
@@ -42,11 +42,11 @@ public final class TextureGenerator {
             int px0 = Math.round(WingGeometry.panelU0(p) * W), px1 = Math.round(WingGeometry.panelU1(p) * W);
             int pw = px1 - px0, ph = py1 - py0;
             BufferedImage veins = veins(pw, ph, 1234 + p * 77);
-            BufferedImage halo = blur(blur(veins, 9), 9);
-            BufferedImage soft = blur(veins, 3);
+            BufferedImage halo = blur(blur(veins, 17), 17);
+            BufferedImage soft = blur(veins, 5);
             // generous margin so bilinear filtering never bleeds the background in
-            for (int y = py0 - 4; y < py1 + 4; y++) {
-                for (int x = px0 - 4; x < px1 + 4; x++) {
+            for (int y = py0 - 8; y < py1 + 8; y++) {
+                for (int x = px0 - 8; x < px1 + 8; x++) {
                     int lx = Math.max(0, Math.min(pw - 1, x - px0)), ly = Math.max(0, Math.min(ph - 1, y - py0));
                     float w = lx / (float) (pw - 1), t = ly / (float) (ph - 1);
                     float edge = Math.min(w, 1 - w);
@@ -71,9 +71,11 @@ public final class TextureGenerator {
                     float hem = (float) Math.exp(-(1 - t) / 0.012f);
                     v *= 1 - 0.55f * hem;
                     v *= 1 + 0.16f * (float) Math.exp(-Math.abs(1 - t - 0.035f) / 0.012f);
-                    float vein = (soft.getRGB(lx, ly) & 255) / 255f;
+                    float hubFade = Math.min(1, Math.max(0, (t - 0.22f) / 0.30f));
+                    float vein = hubFade * (soft.getRGB(lx, ly) & 255) / 255f;
                     v *= 1 - 0.42f * vein;
-                    float orn = ornament(w, t, p), star = sparkle(w, t, p);
+                    float orn = 0, star = sparkle(w, t, p);
+                    for (int sy = 0; sy < 3; sy++) for (int sx = 0; sx < 3; sx++) orn += ornament(w + (sx - 1) / 3f / pw, t + (sy - 1) / 3f / ph, p) / 9f;
                     float hfd = heartField(w, t);
                     boolean moat = hfd > 0.1f && hfd < 0.5f;
                     if (moat) v *= 0.5f;
@@ -81,8 +83,8 @@ public final class TextureGenerator {
                     int g = clamp(Math.round(v * 255));
                     albedo.setRGB(x, y, 0xff000000 | (g << 16) | (g << 8) | g);
 
-                    float core = (veins.getRGB(lx, ly) & 255) / 255f, hl = (halo.getRGB(lx, ly) & 255) / 255f;
-                    float e = core * 0.95f + hl * 1.6f * 0.55f;
+                    float core = hubFade * (veins.getRGB(lx, ly) & 255) / 255f, hl = hubFade * (halo.getRGB(lx, ly) & 255) / 255f;
+                    float e = core * 0.6f + hl * 1.6f * 0.4f;
                     e *= 1 - 0.35f * t;
                     // faint ember line on the hem and along the bones
                     e += 0.34f * (float) Math.exp(-Math.abs(1 - t - 0.012f) / 0.008f);
@@ -96,7 +98,7 @@ public final class TextureGenerator {
             }
         }
         // strip: bone, claw, metal, gem
-        int sy0 = Math.round(WingGeometry.STRIP_V0 * H) - 6, sy1 = Math.round(WingGeometry.STRIP_V1 * H) + 6;
+        int sy0 = Math.round(WingGeometry.STRIP_V0 * H) - 12, sy1 = Math.round(WingGeometry.STRIP_V1 * H) + 12;
         for (int y = sy0; y < sy1; y++) {
             float v = (y - sy0) / (float) (sy1 - sy0);
             for (int x = 0; x < W; x++) {
@@ -122,7 +124,7 @@ public final class TextureGenerator {
                     float brushed = Noise.fbm2(u * 900, v * 3, 900, 2);
                     float sheen = (float) Math.pow(Math.max(0, Math.sin(v * 2 * Math.PI + 1.1f)), 4);
                     float eng = (float) Math.abs(Math.sin(u * 2 * Math.PI * 70 + 4 * Math.sin(v * 2 * Math.PI * 3)));
-                    val = 0.5f + 0.6f * sheen + 0.12f * (brushed - 0.5f) - 0.22f * (float) Math.pow(1 - eng, 6);
+                    val = 0.72f + 0.5f * sheen + 0.12f * (brushed - 0.5f) - 0.22f * (float) Math.pow(1 - eng, 6);
                 } else if (u < 0.875f) {
                     float facet = Noise.hash2((int) (u * 260), (int) (v * 9), 1000);
                     val = 0.7f + 0.3f * facet;
@@ -212,7 +214,7 @@ public final class TextureGenerator {
             if (!inHeart && bd < 0.0032f) o = Math.max(o, 0.9f);
         }
         // curling vines either side, with leaves
-        if (t > 0.16f && t < 0.83f) {
+        if (t > 0.36f && t < 0.83f) {
             for (int sgn = -1; sgn <= 1; sgn += 2) {
                 float cx = sgn * (0.26f + 0.075f * (float) Math.sin(t * 34 + p * 1.3f)) * t * A;
                 float thick = 0.0016f + 0.0012f * t;
@@ -260,17 +262,17 @@ public final class TextureGenerator {
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         Random r = new Random(seed);
         for (int side = 0; side < 2; side++) {
-            int n = 7;
+            int n = 5;
             for (int i = 0; i < n; i++) {
                 double t0 = 0.03 + (i + r.nextDouble() * 0.7) / n * 0.82;
                 double x = side == 0 ? 0.0 : 1.0;
                 double dir = side == 0 ? 1 : -1;
                 // heads into the membrane and bends towards the trailing edge
-                branch(g, r, x * w, t0 * h, dir * (0.55 + r.nextDouble() * 0.25), 0.55 + r.nextDouble() * 0.35, (0.20 + r.nextDouble() * 0.20) * h, 4.6f, 0, w, h);
+                branch(g, r, x * w, t0 * h, dir * (0.55 + r.nextDouble() * 0.25), 0.55 + r.nextDouble() * 0.35, (0.20 + r.nextDouble() * 0.20) * h, 4.6f * S, 0, w, h);
             }
         }
         // a few vessels straight out of the hub
-        for (int i = 0; i < 3; i++) branch(g, r, (0.3 + 0.2 * i) * w, 0.01 * h, (i - 1) * 0.12, 1, (0.3 + r.nextDouble() * 0.2) * h, 4.2f, 0, w, h);
+        for (int i = 0; i < 3; i++) branch(g, r, (0.3 + 0.2 * i) * w, 0.01 * h, (i - 1) * 0.12, 1, (0.3 + r.nextDouble() * 0.2) * h, 4.2f * S, 0, w, h);
         g.dispose();
         return img;
     }
@@ -278,11 +280,11 @@ public final class TextureGenerator {
     private static void branch(Graphics2D g, Random r, double x, double y, double dx, double dy, double len, float width, int depth, int w, int h) {
         double l = Math.hypot(dx * w / h, dy);
         dx /= l; dy /= l;
-        int steps = Math.max(4, (int) (len / 9));
+        int steps = Math.max(4, (int) (len / (9 * S)));
         double step = len / steps;
         for (int i = 0; i < steps; i++) {
             float wd = width * (1 - 0.75f * i / steps);
-            double ang = (r.nextDouble() - 0.5) * 0.5;
+            double ang = (r.nextDouble() - 0.5) * 0.36;
             double ndx = dx * Math.cos(ang) - dy * Math.sin(ang), ndy = dx * Math.sin(ang) + dy * Math.cos(ang);
             // keep drifting towards the trailing edge
             ndy += 0.06;
@@ -291,13 +293,13 @@ public final class TextureGenerator {
             double nx = x + dx * step * w / h * 0.55, ny = y + dy * step;
             int c = clamp(Math.round(255 * (0.55f + 0.45f * (1 - i / (float) steps)) * (depth == 0 ? 1f : 0.8f)));
             g.setColor(new Color(c, c, c));
-            g.setStroke(new BasicStroke(Math.max(0.9f, wd), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.setStroke(new BasicStroke(Math.max(0.9f * S, wd), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             Path2D.Double p = new Path2D.Double();
             p.moveTo(x, y);
             p.lineTo(nx, ny);
             g.draw(p);
             x = nx; y = ny;
-            if (depth < 3 && i > 1 && r.nextDouble() < (depth == 0 ? 0.34 : 0.22)) {
+            if (depth < 2 && i > 1 && r.nextDouble() < (depth == 0 ? 0.30 : 0.16)) {
                 double sgn = r.nextBoolean() ? 1 : -1;
                 double a = sgn * (0.5 + r.nextDouble() * 0.5);
                 branch(g, r, x, y, dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a), len * (0.35 + r.nextDouble() * 0.25), wd * 0.72f, depth + 1, w, h);

@@ -28,6 +28,8 @@ public final class WingPose {
     public float ripple, ripplePhase;
     /** 0..1 position of the glow pulse travelling from the wrist to the trailing edge. */
     public float pulse;
+    /** Animation clock in seconds, for twinkles. */
+    public float time;
     /** Extra glow brightness multiplier. */
     public float glowBoost = 1;
 }

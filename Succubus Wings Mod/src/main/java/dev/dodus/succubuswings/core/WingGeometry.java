@@ -125,6 +125,8 @@ public final class WingGeometry {
                 gridN[o] = nx / nl; gridN[o + 1] = ny / nl; gridN[o + 2] = nz / nl;
             }
         }
+        twinkleTime = pose.time;
+        if (cfg.glow > 0.01f) sparkles(pose, cfg, pal, i, size, mesh);
         float u0 = panelU0(i), u1 = panelU1(i);
         memPal = pal; memPanel = i;
         float glowBase = cfg.glow * pose.glowBoost;
@@ -148,6 +150,69 @@ public final class WingGeometry {
                     glowVert(j, k + 1, u0, u1, gr, gg, gb, glowBase, pose.pulse);
                     glowVert(j + 1, k + 1, u0, u1, gr, gg, gb, glowBase, pose.pulse);
                     glowVert(j + 1, k, u0, u1, gr, gg, gb, glowBase, pose.pulse);
+                    flush(mesh.glow);
+                }
+            }
+        }
+    }
+
+    private float twinkleTime;
+
+    /** Twinkling four-point stars on the membrane and a few motes of dust drifting off the trailing edge. */
+    private void sparkles(WingPose pose, WingConfig cfg, Palette pal, int i, float size, WingMesh mesh) {
+        float gr = ((pal.glow >> 16) & 255) / 255f, gg = ((pal.glow >> 8) & 255) / 255f, gb = (pal.glow & 255) / 255f;
+        float time = pose.time;
+        for (int n = 0; n < 9; n++) {
+            int id = i * 31 + n;
+            boolean mote = n >= 6;
+            float h1 = Noise.hash(id, 811), h2 = Noise.hash(id, 823), h3 = Noise.hash(id, 839), h4 = Noise.hash(id, 853);
+            float life = 0, bright;
+            int j, k;
+            if (mote) {
+                float period = 2.2f + 2.4f * h3;
+                life = time / period + h4;
+                int cycle = (int) Math.floor(life);
+                life -= cycle;
+                h1 = Noise.hash(id + cycle * 7, 861);
+                j = GT; k = 1 + (int) (h1 * (GW - 2));
+                bright = (float) Math.sin(Math.PI * life) * (0.6f + 0.4f * (float) Math.sin(time * 9 + id));
+            } else {
+                j = 4 + (int) (h1 * (GT - 5)); k = 2 + (int) (h2 * (GW - 4));
+                float tw = (float) Math.sin(time * (0.7f + 1.5f * h3) + h4 * 6.28f);
+                bright = (float) Math.pow(Math.max(0, tw), 5);
+            }
+            if (bright < 0.03f) continue;
+            int o = (j * (GW + 1) + k) * 3;
+            float x = grid[o], y = grid[o + 1], z = grid[o + 2];
+            float nx = gridN[o], ny = gridN[o + 1], nz = gridN[o + 2];
+            float r = (mote ? 0.022f + 0.02f * h2 : 0.035f + 0.055f * h3 * bright) * size;
+            if (mote) {
+                // drifts off the edge, sinking and swaying
+                x += 0.10f * size * (float) Math.sin(life * 5 + id) * life;
+                y -= (0.10f + 0.55f * life * life) * size;
+                z += (0.05f + 0.25f * life) * size * (h2 - 0.3f);
+            }
+            float in = Math.min(1, cfg.glow) * bright;
+            float cr = Math.min(1, gr * 0.6f + 0.4f) * in, cg = Math.min(1, gg * 0.6f + 0.4f) * in, cb = Math.min(1, gb * 0.6f + 0.4f) * in;
+            // two crossed slivers per face make a four-point star that reads from either side
+            for (int f = -1; f <= 1; f += 2) {
+                float ox = x + nx * 0.02f * size * f, oy = y + ny * 0.02f * size * f, oz = z + nz * 0.02f * size * f;
+                for (int arm = 0; arm < 2; arm++) {
+                    // tangent frame on the membrane
+                    float ax = arm == 0 ? 1 : 0, ay = arm == 0 ? 0 : 1, az = 0;
+                    float d = ax * nx + ay * ny + az * nz;
+                    ax -= nx * d; ay -= ny * d; az -= nz * d;
+                    float al = (float) Math.sqrt(ax * ax + ay * ay + az * az);
+                    if (al < 1e-3f) continue;
+                    ax /= al; ay /= al; az /= al;
+                    float bx = ny * az - nz * ay, by = nz * ax - nx * az, bz = nx * ay - ny * ax;
+                    float w = r * 0.16f;
+                    for (int v = 0; v < 4; v++) {
+                        int vv = f > 0 ? v : 3 - v;
+                        float ca = vv == 0 ? -r : vv == 2 ? r : 0, cbb = vv == 1 ? -w : vv == 3 ? w : 0;
+                        float e = vv == 1 || vv == 3 ? 1 : 0.0f;
+                        put(ox + ax * ca + bx * cbb, oy + ay * ca + by * cbb, oz + az * ca + bz * cbb, nx * f, ny * f, nz * f, WHITE_U, WHITE_V, cr * e, cg * e, cb * e, 1);
+                    }
                     flush(mesh.glow);
                 }
             }
@@ -197,8 +262,8 @@ public final class WingGeometry {
         float t = j / (float) GT, w = k / (float) GW;
         float d = (t - pulse) / 0.16f;
         float d2 = (t - pulse + 1.35f) / 0.16f;
-        float in = base * (0.5f + 1.1f * ((float) Math.exp(-d * d) + (float) Math.exp(-d2 * d2)));
-        in = Math.min(in, 2f) * 0.5f;
+        float in = base * (0.38f + 0.10f * (float) Math.sin(twinkleTime * 1.9f) + 1.7f * ((float) Math.exp(-d * d) + (float) Math.exp(-d2 * d2)));
+        in = Math.min(in, 2.4f) * 0.5f;
         put(grid[o], grid[o + 1], grid[o + 2], gridN[o], gridN[o + 1], gridN[o + 2],
                 u0 + (u1 - u0) * w, PANEL_V0 + (PANEL_V1 - PANEL_V0) * t, Math.min(1, r * in * 2), Math.min(1, g * in * 2), Math.min(1, b * in * 2), 1);
     }
@@ -259,8 +324,8 @@ public final class WingGeometry {
             }
             // jewelry band near the finger base
             if (cfg.jewelry && i < 4) {
-                band(mesh.solid, F, 0.13f + 0.015f * i, 0.035f, r0 * 1.42f, pal.accent);
-                if (i == 0) band(mesh.solid, F, 0.205f, 0.014f, r0 * 1.3f, pal.accent);
+                band(mesh.solid, F, 0.13f + 0.015f * i, 0.035f, r0 * 1.42f, warm(pal.accent));
+                if (i == 0) band(mesh.solid, F, 0.205f, 0.014f, r0 * 1.3f, warm(pal.accent));
             }
         }
         // thorns along the leading edge of the arm
@@ -309,7 +374,7 @@ public final class WingGeometry {
                 float[] p = lerp3(sk.elbow, sk.wrist, 0.52f + 0.07f * k);
                 arm[k * 3] = p[0]; arm[k * 3 + 1] = p[1]; arm[k * 3 + 2] = p[2];
                 ringRad[k] = (0.057f + 0.008f * (k == 0 || k == 4 ? 1 : 0) + 0.004f * (k == 2 ? 1 : 0)) * rs;
-                rgb(k, pal.accent, 1.45f * (k % 2 == 0 ? 1.25f : 0.6f));
+                rgb(k, warm(pal.accent), 1.45f * (k % 2 == 0 ? 1.25f : 0.6f));
                 ringAlong[k] = k / 4f;
             }
             tube(mesh.solid, 5, sk.axisN, METAL_U0, METAL_U1, 1f);
@@ -323,7 +388,7 @@ public final class WingGeometry {
         for (int k = 0; k < points; k++) {
             ringPts[k * 3] = chain[k * 3]; ringPts[k * 3 + 1] = chain[k * 3 + 1]; ringPts[k * 3 + 2] = chain[k * 3 + 2];
             ringRad[k] = 0.0075f * (1 + 0.5f * (k & 1));
-            rgb(k, pal.accent, 1.45f * ((k & 1) == 0 ? 1f : 0.7f));
+            rgb(k, warm(pal.accent), 1.45f * ((k & 1) == 0 ? 1f : 0.7f));
             ringAlong[k] = k / (float) (points - 1);
         }
         float[] up = {0, 0, 1};
@@ -410,7 +475,7 @@ public final class WingGeometry {
                 ringPts[k * 3 + 1] = a[1] + (b[1] - a[1]) * t + gy * s4;
                 ringPts[k * 3 + 2] = a[2] + (b[2] - a[2]) * t + gz * s4 - 0.03f * rs * 4 * t * (1 - t);
                 ringRad[k] = 0.0055f * rs * (1 + 0.6f * (k & 1));
-                rgb(k, pal.accent, 1.45f * ((k & 1) == 0 ? 1.15f : 0.65f));
+                rgb(k, warm(pal.accent), 1.45f * ((k & 1) == 0 ? 1.15f : 0.65f));
                 ringAlong[k] = t;
             }
             float[] up = {0.2f, 0.3f, 1};
@@ -448,13 +513,16 @@ public final class WingGeometry {
         float[] up = {1, 0, 0};
         tube(mesh.solid, points, up, BONE_U0, BONE_U1, 1f);
         if (cfg.jewelry) {
-            band(mesh.solid, tail, 0.34f, 0.022f, 0.052f * rs, pal.accent);
-            band(mesh.solid, tail, 0.93f, 0.02f, 0.03f * rs, pal.accent);
+            band(mesh.solid, tail, 0.34f, 0.022f, 0.052f * rs, warm(pal.accent));
+            band(mesh.solid, tail, 0.93f, 0.02f, 0.03f * rs, warm(pal.accent));
         }
         // spade
         int e = (points - 1) * 3, p = (points - 2) * 3;
         float dx = tail[e] - tail[p], dy = tail[e + 1] - tail[p + 1], dz = tail[e + 2] - tail[p + 2];
         float dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // the charm stands mostly upright so its face reads from behind instead of going edge-on
+        dx = 0.45f * dx / dl; dy = 0.45f * dy / dl + 0.9f; dz = 0.45f * dz / dl;
+        dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         dx /= dl; dy /= dl; dz /= dl;
         float lx = 1 - dx * dx, ly = -dx * dy, lz = -dx * dz;
         float ll = (float) Math.sqrt(lx * lx + ly * ly + lz * lz);
@@ -462,7 +530,7 @@ public final class WingGeometry {
         lx /= ll; ly /= ll; lz /= ll;
         float nx = dy * lz - dz * ly, ny = dz * lx - dx * lz, nz = dx * ly - dy * lx;
         float[] o = {tail[e], tail[e + 1], tail[e + 2]}, dd = {dx, dy, dz}, la = {lx, ly, lz}, no = {nx, ny, nz};
-        heart(mesh, o, dd, la, no, 0.36f * rs, 0.2f * rs, 0.045f * rs, Palette.mix(pal.claw, pal.gem, 0.72f), pal, cfg);
+        heart(mesh, o, dd, la, no, 0.36f * rs, 0.2f * rs, 0.095f * rs, Palette.mix(pal.claw, pal.gem, 0.72f), pal, cfg);
         sg = saved;
     }
 
@@ -472,7 +540,7 @@ public final class WingGeometry {
      */
     private void heart(WingMesh mesh, float[] o, float[] d, float[] l, float[] n, float len, float wid, float thick, int rgb, Palette pal, WingConfig cfg) {
         final int N = 28;
-        float[] ring = {0f, 0.5f, 0.86f, 1f}, dome = {1f, 0.86f, 0.5f, 0.12f}, lit = {1.25f, 1.0f, 0.8f, 1.5f};
+        float[] ring = {0f, 0.32f, 0.58f, 0.78f, 0.92f, 1f}, dome = {1f, 0.95f, 0.82f, 0.63f, 0.38f, 0.06f}, lit = {1.3f, 1.2f, 1.02f, 0.86f, 0.8f, 1.5f};
         float cr = ((rgb >> 16) & 255) / 255f, cg = ((rgb >> 8) & 255) / 255f, cb = (rgb & 255) / 255f;
         float gr = ((pal.glow >> 16) & 255) / 255f, gg = ((pal.glow >> 8) & 255) / 255f, gb = (pal.glow & 255) / 255f;
         float um = (GEM_U0 + GEM_U1) * 0.5f, vm = (STRIP_V0 + STRIP_V1) * 0.5f;
@@ -481,16 +549,16 @@ public final class WingGeometry {
             WingMesh.Layer layer = pass == 0 ? mesh.solid : mesh.glow;
             float grow = pass == 0 ? 1 : 1.16f, gm = Math.min(1, 0.55f * cfg.glow);
             for (int k = 0; k < N; k++) {
-                for (int r = 0; r < 3; r++) {
+                for (int r = 0; r < ring.length - 1; r++) {
                     for (int face = -1; face <= 1; face += 2) {
                         for (int v = 0; v < 4; v++) {
                             int vv = face > 0 ? v : 3 - v;
                             int rr = (vv == 0 || vv == 1) ? r : r + 1, kk = (vv == 0 || vv == 3) ? k : k + 1;
                             heartVert(o, d, l, n, len, wid, thick * face, kk / (float) N, ring[rr] * grow, dome[rr], face,
                                     pass == 0 ? um : WHITE_U, pass == 0 ? vm : WHITE_V,
-                                    pass == 0 ? cr * lit[rr] + (rr == 3 ? gr * 0.5f : 0) : gr * gm * (0.3f + 0.7f * ring[rr]),
-                                    pass == 0 ? cg * lit[rr] + (rr == 3 ? gg * 0.5f : 0) : gg * gm * (0.3f + 0.7f * ring[rr]),
-                                    pass == 0 ? cb * lit[rr] + (rr == 3 ? gb * 0.5f : 0) : gb * gm * (0.3f + 0.7f * ring[rr]));
+                                    pass == 0 ? cr * lit[rr] + (rr == 5 ? gr * 0.5f : 0) : gr * gm * (0.3f + 0.7f * ring[rr]),
+                                    pass == 0 ? cg * lit[rr] + (rr == 5 ? gg * 0.5f : 0) : gg * gm * (0.3f + 0.7f * ring[rr]),
+                                    pass == 0 ? cb * lit[rr] + (rr == 5 ? gb * 0.5f : 0) : gb * gm * (0.3f + 0.7f * ring[rr]));
                         }
                         flush(layer);
                     }
@@ -572,6 +640,12 @@ public final class WingGeometry {
         ringCol[k * 3] = lerpC(pal.boneBase >> 16, pal.boneTip >> 16, m);
         ringCol[k * 3 + 1] = lerpC(pal.boneBase >> 8, pal.boneTip >> 8, m);
         ringCol[k * 3 + 2] = lerpC(pal.boneBase, pal.boneTip, m);
+    }
+
+    /** Yellow metals drift towards orange so they read as gold, not olive, on their shaded side. */
+    private static int warm(int c) {
+        int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+        return r > g && g > b + 40 ? Palette.mix(c, 0xffa232, 0.38f) : c;
     }
 
     private void rgb(int k, int rgb, float f) {
