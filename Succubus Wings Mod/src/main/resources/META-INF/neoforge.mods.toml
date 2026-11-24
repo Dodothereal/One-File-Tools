@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="Dodus"
+description='''Huge, living succubus wings that react to how you move, with color schemes and an in-game 3D wardrobe (/wings).'''
+
+[[dependencies.${mod_id}]]
+type="required"
+modId="neoforge"
+versionRange="[21.1.1,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+type="required"
+modId="minecraft"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"
