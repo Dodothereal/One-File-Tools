@@ -1,0 +1,76 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = "succubuswings-neoforge-${minecraft_version}" }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+sourceSets {
+    // Headless preview renderer: only uses the Minecraft-free "core" package.
+    tools {
+        java { srcDir 'src/tools/java' }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+neoForge {
+    version = neo_version
+    parchment {
+        mappingsVersion = parchment_mappings_version
+        minecraftVersion = parchment_minecraft_version
+    }
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+    mods {
+        "${mod_id}" { sourceSet(sourceSets.main) }
+    }
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    toolsImplementation 'org.joml:joml:1.10.5'
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [minecraft_version: minecraft_version, neo_version: neo_version,
+                             mod_id: mod_id, mod_name: mod_name, mod_version: mod_version]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/neoforge.mods.toml']) { expand replaceProperties }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// ./gradlew renderPreview -Pargs="..."  -> writes PNG frames of the wings without starting Minecraft.
+tasks.register('renderPreview', JavaExec) {
+    group = 'succubus wings'
+    classpath = sourceSets.tools.runtimeClasspath
+    mainClass = 'dev.dodus.succubuswings.tools.PreviewRenderer'
+    jvmArgs '-Djava.awt.headless=true', '-Xmx4G'
+    if (project.hasProperty('args')) { args project.property('args').toString().split(' ') }
+}
+
+// Regenerates the wing textures (they are committed, so a normal build does not need this).
+tasks.register('generateTextures', JavaExec) {
+    group = 'succubus wings'
+    classpath = sourceSets.tools.runtimeClasspath
+    mainClass = 'dev.dodus.succubuswings.tools.TextureGenerator'
+    jvmArgs '-Djava.awt.headless=true'
+    args 'src/main/resources/assets/succubuswings/textures/entity'
+}
