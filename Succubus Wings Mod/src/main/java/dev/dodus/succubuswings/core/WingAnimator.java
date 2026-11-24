@@ -177,7 +177,7 @@ public final class WingAnimator {
         float climb = clamp(smUp / 6f, -1, 1);
         float flapVar = Noise.smooth(t * 0.31f + 5, seed + 21);
         float gate = smooth(clamp01((Noise.smooth(t * 0.27f + 11, seed + 23) + 0.55f) * 2.2f));
-        flapAmp *= (1 + 0.16f * flapVar) * (1 - weight[FLY] * 0.8f * (1 - gate));
+        flapAmp *= (1 + 0.16f * flapVar) * (1 - weight[FLY] * 0.4f * (1 - gate));
         float flapHz = (1.5f + 0.14f * Noise.smooth(t * 0.23f + 2, seed + 22)) * weight[HOVER] + (1.4f + 0.02f * hSpeed) * weight[FLY] + 1.1f * (1 - weight[HOVER] - weight[FLY]);
         flapHz *= 1 + 0.28f * Math.max(0, climb);
         flapAmp *= 1 + 0.3f * climb;
@@ -297,6 +297,8 @@ public final class WingAnimator {
         float snap = event == EV_FLINCH && eventT < 0.35f ? 4f : 1f, snapD = (float) Math.sqrt(snap);
         for (int s = 0; s < 2; s++) {
             float sideSign = s == RIGHT ? 1 : -1;
+            // the two wings never beat in perfect unison
+            float phS = ph - 0.22f * sideSign * (0.6f + 0.4f * Noise.smooth(t * 0.4f + 80, seed + 51)) * (weight[HOVER] + weight[FLY]);
             float tSpread = clamp01(bSpread + calmW * 0.042f * breathe + weight[SNEAK] * 0.035f * (float) Math.sin(t * 2 * Math.PI * 0.5f) + weight[SPRINT] * 0.06f * Noise.smooth(t * 0.8f + 50, seed) + weight[GLIDE] * -0.03f * Noise.smooth(t * 0.45f + 70 + s * 3, seed) + weight[SWIM] * 0.10f * (float) Math.sin(t * 2 * Math.PI * 0.8f - 1.1f) + evSpread - weak * 0.05f
                     + weight[FALL] * 0.07f * (float) Math.sin(t * 2 * Math.PI * 1.15f + s * 2.1f));
             float tSweep = bSweep + calmW * 5.5f * D * Noise.smooth(t * 0.33f + s * 17, seed) - calmW * 1.6f * D * breathe + weight[SPRINT] * (9 * D * clamp01(hSpeed / 5.6f) + 6 * D * Noise.smooth(t * 0.7f + s * 4 + 20, seed)) + swimSway * 5 * D + evSweep[s]
@@ -346,9 +348,9 @@ public final class WingAnimator {
             p.raise = raise[s] + lagRaise[s] + flapAmp * 17 * D * (float) Math.cos(ph - 0.45f) + walkBob * sideSign * 5.5f * D + Math.abs(walkBob) * 4.0f * D * (weight[WALK] + weight[SPRINT]) + shiver * 1.4f * D
                     + weight[GLIDE] * 16 * D * bank;
             p.twist = bTwist + evTwist + weight[GLIDE] * 15 * D * bank + weight[FALL] * 5 * D * (float) Math.sin(t * 2 * Math.PI * 1.3f + s * 2.9f) + flapAmp * 20 * D * (float) Math.sin(ph) + shiver * 1.2f * D - lagSweep[s] * 0.25f;
-            p.armBend = flapAmp * 13 * D * (float) Math.sin(ph - 0.35f) + lagCurl[s] * 0.25f;
-            p.curl = curl[s] + lagCurl[s] * 0.75f + flapAmp * 32 * D * (float) Math.sin(ph - 0.75f);
-            p.curlTip = (weight[WALK] + weight[SPRINT]) * 13 * D * (float) Math.sin(t * 2 * Math.PI * (1.5f + 0.12f * hSpeed) - 1.3f) + swimSway * 10 * D + flapAmp * 42 * D * (float) Math.sin(ph - 1.35f) + lagCurl[s] * 0.9f + weight[GLIDE] * (-10 + 9 * (float) Math.sin(t * 2 * Math.PI * 0.7f + s * 1.9f) - 10 * Math.max(0, -bank)) * D + shiver * 3 * D
+            p.armBend = flapAmp * 13 * D * (float) Math.sin(phS - 0.35f) + lagCurl[s] * 0.25f;
+            p.curl = curl[s] + lagCurl[s] * 0.75f + flapAmp * 32 * D * (float) Math.sin(phS - 0.75f);
+            p.curlTip = (weight[WALK] + weight[SPRINT]) * 13 * D * (float) Math.sin(t * 2 * Math.PI * (1.5f + 0.12f * hSpeed) - 1.3f) + swimSway * 10 * D + flapAmp * 42 * D * (float) Math.sin(phS - 1.35f) + lagCurl[s] * 0.9f + weight[GLIDE] * (-10 + 9 * (float) Math.sin(t * 2 * Math.PI * 0.7f + s * 1.9f) - 10 * Math.max(0, -bank)) * D + shiver * 3 * D
                     + weight[FALL] * -14 * D * (1 + 0.6f * (float) Math.sin(t * 2 * Math.PI * 2.3f + s));
             p.fan = evFan + calmW * 0.035f * breathe + flapAmp * 0.05f * upFold;
             for (int f = 0; f < WingPose.FINGERS; f++) {
@@ -357,8 +359,8 @@ public final class WingAnimator {
                 p.fingerFlex[f] = (calmW * (12f * slow + 3.2f * quick + 3.5f * (float) Math.sin(t * 2 * Math.PI * 0.27f + seed - 0.9f * f)) + shiver * (f % 2 == 0 ? 1.6f : -1.6f)) * D + evFlex[s][f]
                         + (weight[GLIDE] * 11f + weight[FALL] * 12f + weight[SPRINT] * 7f + weight[SNEAK] * 5f) * D * quick + weight[SWIM] * 9 * D * (float) Math.sin(t * 2 * Math.PI * 0.8f - 0.9f * f) + fLag[s][f] * 0.35f + walkBob * (f - 2) * 1.2f * D;
                 p.fingerCurl[f] = (weight[SWIM] * 20 * (float) Math.sin(t * 2 * Math.PI * 0.8f - 0.85f * f - 0.6f) + weight[SNEAK] * 9 * (float) Math.sin(t * 2 * Math.PI * 0.55f - 0.9f * f + s) + weight[GLIDE] * 9 * Noise.smooth(t * 1.3f + f * 4.7f + s * 13, seed + 41)) * D + fLag[s][f] * 0.9f + (calmW * 14f * Noise.smooth(t * 0.39f + f * 7.3f + s * 23.1f, seed + 3)) * D
-                        + flapAmp * 13 * D * (float) Math.sin(ph - 0.75f - 0.22f * f) * (0.35f * f);
-                float air = flapAmp * 0.21f * (float) Math.sin(ph - 0.25f - 0.12f * f);
+                        + flapAmp * 13 * D * (float) Math.sin(phS - 0.75f - 0.22f * f) * (0.35f * f);
+                float air = flapAmp * 0.30f * (float) Math.sin(phS - 0.25f - 0.12f * f);
                 float wind = (weight[SPRINT] * 0.09f + weight[FALL] * -0.17f + weight[GLIDE] * -0.11f + weight[RISE] * 0.10f + weight[SWIM] * 0.05f);
                 p.billow[f] = air + wind * (1 + 0.35f * quick) + 0.05f * walkBob * (weight[WALK] + weight[SPRINT]) + 0.035f * calmW * Noise.smooth(t * 0.6f + f * 5.1f + s * 3.3f, seed + 11) - lagCurl[s] * 0.06f - fLag[s][f] * 0.11f
                         + weight[FALL] * 0.12f * (float) Math.sin(t * 2 * Math.PI * 1.8f - f * 1.1f) + weight[GLIDE] * 0.10f * (float) Math.sin(t * 2 * Math.PI * 1.5f - f * 0.9f + s * 2) + weight[SWIM] * 0.09f * (float) Math.sin(t * 2 * Math.PI * 0.8f - f * 0.85f);
@@ -367,9 +369,10 @@ public final class WingAnimator {
                     + clamp01(hSpeed / 20f) * 0.01f + evShiver * 0.03f;
             p.ripple = flutter;
             p.ripplePhase = ripplePhase + s * 1.7f;
+            p.cup = flapAmp * 0.30f * (float) Math.sin(phS - 0.5f) + weight[GLIDE] * (-0.16f + 0.07f * Noise.smooth(t * 0.7f + s * 5, seed + 61)) + weight[FALL] * -0.22f + weight[SPRINT] * 0.10f + weight[SWIM] * 0.12f * (float) Math.sin(t * 2 * Math.PI * 0.8f - 1.2f) - lagCurl[s] * 0.05f;
             p.pulse = pulse;
             p.time = t;
-            p.glowBoost = 1 + 0.35f * flapAmp * Math.max(0, -stroke) + evGlow + 0.5f * clamp01(in.hurt);
+            p.glowBoost = (0.14f + 0.86f * clamp01(spread[s])) * (1 + 0.35f * flapAmp * Math.max(0, -stroke) + evGlow + 0.5f * clamp01(in.hurt));
         }
         first = false;
         ripplePhase -= dt * (9f + 14f * (weight[GLIDE] + weight[FALL] + weight[FLY]));

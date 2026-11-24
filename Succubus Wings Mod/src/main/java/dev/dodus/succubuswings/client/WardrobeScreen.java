@@ -193,7 +193,7 @@ public final class WardrobeScreen extends Screen {
         g.drawString(font, "\u2726 Succubus Wings \u2726", x, 4, 0xff000000 | cfg.palette().accent);
         g.drawString(font, cfg.palette().name, 8, 18, 0xff000000 | cfg.palette().glow);
         String scheme = custom ? "Custom" : Palette.byId(cfg.scheme).name;
-        g.drawString(font, "Colors: " + scheme, x, 16 + ROW + 3, 0xffe8c8d8);
+        g.drawString(font, "Colors", x, 16 + ROW + 3, 0xffe8c8d8);
         String hex = String.format("#%06X  #%06X  #%06X", cfg.palette().outerEdge & 0xffffff, cfg.palette().boneTip & 0xffffff, cfg.palette().glow & 0xffffff);
         g.pose().pushPose();
         g.pose().translate(width - 4 - font.width(hex) * 0.75f, 16 + ROW + 4, 0);
@@ -207,7 +207,8 @@ public final class WardrobeScreen extends Screen {
             g.fill(x, cy + r * 13 + 1, x + 4, cy + r * 13 + 11, 0xff000000 | colors[r]);
             g.drawString(font, names[r], x + 6, cy + r * 13 + 2, custom ? 0xffffffff : 0xffb9a6c2, false);
         }
-        g.drawString(font, ClientWings.serverHasMod() ? "Other players see your wings" : "Only you see them here (server lacks the mod)",
+        String status = ClientWings.serverHasMod() ? "Other players see your wings" : "Only you see them here (server lacks the mod)";
+        g.drawString(font, font.plainSubstrByWidth(status, previewW - 4),
                 4, 4, ClientWings.serverHasMod() ? 0xff9be89b : 0xffe8c06a);
 
         renderPreview(g, partialTick);
@@ -226,7 +227,7 @@ public final class WardrobeScreen extends Screen {
                 if (i % 4 == 0) { g.fill(ix - 1, iy, ix + 2, iy + 1, (a / 2 << 24) | glowC); g.fill(ix, iy - 1, ix + 1, iy + 2, (a / 2 << 24) | glowC); }
             }
         }
-        g.drawString(font, "Drag to rotate - scroll to zoom", 6, previewH - 4, 0x99ffffff);
+        if (previewW > font.width("Drag to rotate - scroll to zoom") + 12) g.drawString(font, "Drag to rotate - scroll to zoom", 6, previewH - 4, 0x99ffffff);
     }
 
     @Override
@@ -276,7 +277,7 @@ public final class WardrobeScreen extends Screen {
         animator.update(in, time, cfg.scale());
 
         // fit: the open wings span roughly 7.5 blocks at size 1
-        float fit = Math.min(previewW / (7.6f * Math.max(1f, cfg.size)), previewH / 4.6f) * 1.5f * zoom;
+        float fit = Math.min(previewW / (7.6f * Math.max(1f, cfg.size)), previewH / 4.6f) * 1.12f * zoom;
         float cx = 4 + previewW / 2f, cyc = 12 + previewH * 0.56f;
         Quaternionf pose = new Quaternionf().rotateZ(Mth.PI).rotateX(pitch * Mth.DEG_TO_RAD - bodyPitch * 0.6f).rotateY(yaw * Mth.DEG_TO_RAD).rotateX(bodyPitch);
         // pivot around chest height instead of the feet

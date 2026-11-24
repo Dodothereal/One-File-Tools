@@ -54,7 +54,7 @@ public final class Effects {
             double wy = p.getY() + (p.isCrouching() ? 1.0 : 1.22) + TIP[1] * s;
             int c = RANDOM.nextFloat() < 0.75f ? pal.glow : pal.gem;
             Vector3f color = new Vector3f(((c >> 16) & 255) / 255f, ((c >> 8) & 255) / 255f, (c & 255) / 255f);
-            mc.level.addParticle(new DustParticleOptions(color, 0.55f + RANDOM.nextFloat() * 0.5f), wx, wy, wz, 0, -0.01, 0);
+            mc.level.addParticle(new DustParticleOptions(color, 0.28f + RANDOM.nextFloat() * 0.22f), wx, wy, wz, 0, -0.01, 0);
         }
     }
 }

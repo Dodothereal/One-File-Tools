@@ -190,7 +190,7 @@ public final class TextureGenerator {
                 // picots on the outer arc
                 float ang = (float) Math.atan2(cv, cu * 2);
                 float pic = (float) Math.abs(Math.sin(ang * 9));
-                if (e > 0.98f && e < 1.1f) o = Math.max(o, 0.9f * (pic > 0.75f ? 1 : 0) * line(e - 1.05f, 0.04f));
+                if (e > 0.98f && e < 1.12f) o = Math.max(o, 0.9f * (float) Math.pow(pic, 5) * line(e - 1.05f, 0.03f));
                 // spokes
                 if (e > 0.72f && e < 0.96f) o = Math.max(o, 0.55f * (float) Math.pow(pic, 10));
                 // little heart in every fan
